@@ -1,0 +1,95 @@
+/* 
+  Localizable.strings
+  HotNew24h
+
+  Created by ThanDuc on 12/01/2023.
+  
+*/
+
+/*
+    login screen
+ */
+"Hot News 24h" = "Tin nóng 24h";
+"Phone Number" = "Số điện thoại";
+"Save phone number" = "Lưu số điện thoại";
+"Or" = "Hoặc";
+"Login" = "Đăng nhập";
+"Enter your phone number" = "Nhập số điện thoại của bạn";
+"Login successfully!" = "Đăng nhập thành công!";
+"Your phone number doesn't exist!" = "Số điện thoại của bạn không tồn tại!";
+"Don’t have an account?" = "Chưa có tài khoản?";
+"Register Now" = "Đăng kí ngay";
+"Please check mail and click the link!" = "Vui lòng nhấn vào liên kết ở mail!";
+
+/*
+    register screen
+ */
+"Register New Account" = "Đăng kí tài khoản mới";
+"SMS Code" = "Mã SMS";
+"Enter your SMS Code" = "Nhập mã SMS của bạn";
+"Register" = "Đăng kí";
+"Had an account? Login now" = "Đã có tài khoản? Đăng nhập ngay";
+"Your phone number existed!" = "Số điện thoại của bạn đã tồn tại!";
+"Your phone number is invalid!" = "Số điện thoại của bạn không hợp lệ!";
+"Your phone number doesn't exist!" = "Số điện thoại của bạn không tồn tại!";
+"SMS code is incorrect!" = "Mã SMS không chính xác!";
+"Register successfully!" = "Đăng kí thành công!";
+
+/*
+    menu screen
+ */
+"Youth" = "Tuổi trẻ";
+"VNExpress" = "VNExpress";
+"Favourite" = "Yêu thích";
+"Seen" = "Đã xem";
+"Settings" = "Cài đặt";
+"About App" = "Hướng dẫn";
+"Contact us" = "Liên hệ với chúng tôi";
+"Delete account" = "Xoá tài khoản";
+"Log out" = "Đăng xuất";
+"Home" = "Trang chủ";
+
+/*
+    category
+ */
+"World" = "Thế giới";
+"News" = "Thời sự";
+"Education" = "Giáo dục";
+"Sports" = "Thể thao";
+"Health" = "Sức khỏe";
+"Science" = "Khoa học";
+"Technology" = "Công nghệ";
+"Business" = "Kinh doanh";
+"Entertainment" = "Giải trí";
+"More" = "Xem thêm";
+
+/*
+    sort category Screen
+ */
+"Sort" = "Sắp xếp";
+"Done" = "Hoàn thành";
+
+/*
+    display screen
+ */
+"Share with:" = "Chia sẻ với:";
+
+/*
+    set up language screen
+ */
+"English" = "Tiếng Anh";
+"Vietnamese" = "Tiếng Việt";
+"Language" = "Ngôn ngữ";
+
+/*
+    delete account
+ */
+"Warning" = "Cảnh báo";
+"Are you sure to delete this new from favourite?" = "Bạn có chắc muốn xoá tin này khỏi yêu thích không?";
+"Cancel" = "Huỷ bỏ";
+"Yes" = "Đồng ý";
+"Are you sure to delete your account?" = "Bạn có chắc muốn xoá tài khoản của bạn không?";
+"Please enter your SMS code to verify" = "Vui lòng nhập mã SMS để xác nhận";
+"Delete Account" = "Xoá tài khoản";
+"Delete account successfully!" = "Xoá tài khoản thành công!";
+"SMS is invalid!" = "Mã SMS không chính xác!";
