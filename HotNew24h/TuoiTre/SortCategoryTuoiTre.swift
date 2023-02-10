@@ -8,63 +8,94 @@
 import UIKit
 import Contacts
 
+protocol UpdateCategory {
+    func update(nameCate: String)
+}
 class SortCategoryTuoiTre: UIViewController {
     
     var list: [String] = []
-    var listKeyUrl: [String] = []
+    var listHidden: [String] = []
     var phoneNumber = ""
     var language = ""
+    var type = ""
+    var nameCate = ""
     
     @IBOutlet weak var tbListCategory: UITableView!
     
+    @IBOutlet weak var lbTittle: UILabel!
     @IBOutlet weak var btnDone: UIButton!
-    @IBOutlet weak var btnSort: UIButton!
     
-    var hidden = true
+    var delegateSortCate: UpdateCategory?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
-        self.language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        
-        list = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber)
-        listKeyUrl = DatabaseManager.shared.getListKeyUrl(phoneNumber: phoneNumber)
-        
-        tbListCategory.delegate = self
-        tbListCategory.dataSource = self
-        
-        tbListCategory.dragInteractionEnabled = true
-        
-        btnSort.setTitle(btnSort.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-        btnDone.setTitle(btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-    }
-    
-    @IBAction func btnDone(_ sender: Any) {
-        tbListCategory.dragDelegate = nil
-        tbListCategory.dropDelegate = nil
-        hidden = true
-        tbListCategory.reloadData()
-        
-        DatabaseManager.shared.updateCategory(phoneNumber: phoneNumber, category: getStringList(list: list), keyCategory: getStringList(list: listKeyUrl))
-        
-        self.navigationController?.popViewController(animated: true)
-    }
-    
-    @IBAction func btnSort(_ sender: Any) {
         tbListCategory.dragDelegate = self
         tbListCategory.dropDelegate = self
-        hidden = false
-        tbListCategory.reloadData()
+        
+        phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
+        // get language
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            self.lbTittle.text = "More".LocalizedString(str: language)
+            self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+        })
+        
+        getListCategory()
+        tbListCategory.dragInteractionEnabled = true
+        
+        btnDone.tintAdjustmentMode = .normal
     }
     
-    func getStringList(list: [String]) -> String {
-        var stringList = ""
-        for i in 0..<list.count - 1 {
-            stringList = stringList + list[i] + "|"
+    // get list category
+    func getListCategory() {
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let category: [Category] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: { [self] in
+            for i in 0..<category.count {
+                self.list.append(category[i].name)
+                self.listHidden.append(category[i].isHidden)
+            }
+            tbListCategory.delegate = self
+            tbListCategory.dataSource = self
+        })
+    }
+    
+    // back to home screen and update position of categories
+    @IBAction func btnDone(_ sender: Any) {
+        if listHidden.contains("false") {
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            for i in 0..<self.list.count {
+                DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, name: self.list[i], type: self.type)
+                DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+            }
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                self.delegateSortCate?.update(nameCate: self.nameCate)
+                self.navigationController?.popViewController(animated: true)
+            })
+        } else {
+            let alert = UIAlertController(title: "Warning".LocalizedString(str: language), message: "You must not hide all categories!".LocalizedString(str: language), preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))
+            self.present(alert, animated: true, completion: nil)
         }
-        stringList += list[list.count-1]
-        return stringList
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.revealViewController()?.gestureEnabled = false
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.revealViewController()?.gestureEnabled = true
     }
 }
 
@@ -76,23 +107,27 @@ extension SortCategoryTuoiTre: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell_1") as! ListTittleCell
         cell.lbCategory.text = list[indexPath.row].LocalizedString(str: language)
-        if hidden {
-            cell.btnSort.isHidden = true
+        cell.indexOfRow = indexPath.row
+        if listHidden[indexPath.row] == "false" {
+            cell.btnHidden.setImage(UIImage(systemName: "pin.fill"), for: .normal)
         } else {
-            cell.btnSort.isHidden = false
-            cell.btnSort.setImage(UIImage(systemName: "line.3.horizontal"), for: .normal)
+            cell.btnHidden.setImage(UIImage(systemName: "pin.slash.fill"), for: .normal)
         }
+        cell.delegateHideCate = self
         return cell
     }
     
+    // sort and swap position
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
         let item1 = list[sourceIndexPath.row]
         list.remove(at: sourceIndexPath.row)
         list.insert(item1, at:destinationIndexPath.row)
-
-        let item2 = listKeyUrl[sourceIndexPath.row]
-        listKeyUrl.remove(at: sourceIndexPath.row)
-        listKeyUrl.insert(item2, at:destinationIndexPath.row)
+        
+        let item2 = listHidden[sourceIndexPath.row]
+        listHidden.remove(at: sourceIndexPath.row)
+        listHidden.insert(item2, at:destinationIndexPath.row)
+        
+        tbListCategory.reloadData()
     }
     
 }
@@ -119,3 +154,15 @@ extension SortCategoryTuoiTre: UITableViewDropDelegate {
 
 }
 
+extension SortCategoryTuoiTre: ClickToHideCate {
+    
+    func clickHideCate(indexOfRow: Int) {
+        if listHidden[indexOfRow] == "false" {
+            listHidden[indexOfRow] = "true"
+        } else {
+            listHidden[indexOfRow] = "false"
+        }
+        tbListCategory.reloadData()
+    }
+}
+    

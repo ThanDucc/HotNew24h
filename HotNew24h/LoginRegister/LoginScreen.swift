@@ -29,38 +29,54 @@ class LoginScreen: UIViewController {
     var count = 0
     var language = ""
     var logIn = false
-    var userEmail: String?
-    var link: String?
-    
     let defaults = Foundation.UserDefaults.standard
+    
+    public static var indexYouthCate = 0
+    public static var indexVNExCate = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.navigationController?.setNavigationBarHidden(true, animated: true)
+        
+        // check if user logining -> go to HomeScreen
         logIn = Foundation.UserDefaults.standard.bool(forKey: "LOG_IN")
         
         if logIn {
-            let homeScreen = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeScreen
-            self.navigationController?.pushViewController(homeScreen, animated: true)
+            let mainScreen = self.storyboard?.instantiateViewController(withIdentifier: "mainScreen") as! MainViewController
+            self.navigationController?.pushViewController(mainScreen, animated: true)
         }
         
+        // Create database and tables
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
         DatabaseManager.shared.createDatabase()
         DatabaseManager.shared.createTables()
+        dispatchGroup.leave()
         
+        // get phone number to get languge to display UI
         let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
         if phoneNumber == nil {
             language = "en"
+            self.setupUI()
         } else {
-            language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                self.language = language
+                self.setupUI()
+            })
         }
-
-        setupUI()
         
+        // add gesture to login with Facebook
         let fbTapGesture = UITapGestureRecognizer(target: self, action: #selector(logInFacebook(_:)))
         fbTapGesture.numberOfTapsRequired = 1
         fbTapGesture.numberOfTouchesRequired = 1
         viewFacebook.addGestureRecognizer(fbTapGesture)
         
+        // add gesture to login with Google
         let ggTapGesture = UITapGestureRecognizer(target: self, action: #selector(logInGoogle(_:)))
         ggTapGesture.numberOfTapsRequired = 1
         ggTapGesture.numberOfTouchesRequired = 1
@@ -75,9 +91,36 @@ class LoginScreen: UIViewController {
             } else if let result = result, result.isCancelled {
                 print("Cancelled")
             } else {
-                self.signIntoFirebaseFb()
+                let credential = FacebookAuthProvider.credential(withAccessToken: AccessToken.current!.tokenString)
+                self.signIn(credential: credential)
             }
         }
+    }
+    
+    func signIn(credential: AuthCredential) {
+        Auth.auth().signIn(with: credential, completion: { result, error in
+            guard result != nil, error == nil else {
+                print(error!.localizedDescription as String)
+                return
+            }
+            let user = Auth.auth().currentUser
+            self.defaults.set(user?.displayName, forKey: "userName")
+            
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: (user?.uid)!)
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                if !check {
+                    Register().registerAccount(userId: (user?.uid)!)
+                }
+            })
+            
+            self.defaults.set((user?.uid)!, forKey: "userPhoneNumber")
+            
+            self.login()
+            
+        })
     }
     
     func getFacebookData() {
@@ -97,83 +140,48 @@ class LoginScreen: UIViewController {
         }
     }
     
-    func signIntoFirebaseFb() {
-        let credential = FacebookAuthProvider.credential(withAccessToken: AccessToken.current!.tokenString)
-        signIn(credential: credential)
-    }
-    
+    // login with google to get email
     @objc func logInGoogle(_ gesture: UITapGestureRecognizer) {
         GIDSignIn.sharedInstance.signIn(withPresenting: self) { signInResult, error in
             guard error == nil else {
                 return
             }
-            
-            self.userEmail = signInResult?.user.profile?.email
-            
-            let accessToken = signInResult?.user.accessToken.tokenString
-            let idToken = signInResult?.user.idToken?.tokenString
-
-            let credential = GoogleAuthProvider.credential(withIDToken: idToken!, accessToken: accessToken!)
-            self.signIn(credential: credential)
-            
-//            self.sendFirebaseEmailLink()
+            let email = signInResult?.user.profile?.email
+            self.createUser(email: email!, completion: { success in
+                let dispatchGroup = DispatchGroup()
+                dispatchGroup.enter()
+                let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: email!)
+                dispatchGroup.leave()
+                dispatchGroup.notify(queue: .main, execute: {
+                    if !check {
+                        Register().registerAccount(userId: email!)
+                    }
+                })
+                self.defaults.set(email, forKey: "userPhoneNumber")
+                self.loginGoogle(email: email!)
+            })
         }
     }
     
-    func signIn(credential: AuthCredential) {
-        Auth.auth().signIn(with: credential, completion: { result, error in
-            guard result != nil, error == nil else {
-                print(error!.localizedDescription as String)
+    // login in Firebase
+    func loginGoogle(email: String) {
+        Auth.auth().signIn(withEmail: email, password: "123456") { authResult, error in
+            guard (error == nil) else {
+                print("error to login with google")
                 return
             }
-            let user = Auth.auth().currentUser
-            self.defaults.set(user?.displayName, forKey: "userName")
-            Register().registerAccount(userId: (user?.uid)!)
-            self.defaults.set((user?.uid)!, forKey: "userPhoneNumber")
-            
             self.login()
-            
-        })
+        }
     }
-
-    func sendFirebaseEmailLink() {
-        let actionCodeSettings = ActionCodeSettings.init()
-        let email = userEmail
-        actionCodeSettings.url = URL.init(string: "https://hotnew24h.page.link/iGuj")
-
-        actionCodeSettings.handleCodeInApp = true
-        actionCodeSettings.setIOSBundleID(Bundle.main.bundleIdentifier!)
-
-        Auth.auth().sendSignInLink(toEmail: email!, actionCodeSettings: actionCodeSettings) { error in
-            if let error = error {
-                print(error.localizedDescription)
+    
+    func createUser(email: String, completion: @escaping(Bool) -> Void) {
+        Auth.auth().createUser(withEmail: email, password: "123456") { authResult, error in
+            guard error == nil else {
+                completion(false)
                 return
             }
-            else {
-                UserDefaults.standard.set(email, forKey: "Email")
-                print("Email sent to user")
-            }
-
-            self.lbStatus.text = "Please check mail and click link!".LocalizedString(str: self.language)
-        }
-    }
-
-    @objc func signInUserAfterEmailLinkClick() {
-        if let link = UserDefaults.standard.value(forKey: "Link") as? String {
-            self.link = link
-        }
-        Auth.auth().signIn(withEmail: userEmail!, link: link!) { (result, error) in
-            if error == nil && result != nil {
-                if (Auth.auth().currentUser?.isEmailVerified)! {
-                    print("User verified with passwordless email")
-                }
-                else {
-                    print("User NOT verified by passwordless email")
-                }
-            }
-            else {
-                print("Error with passwordless email verfification: \(error?.localizedDescription ?? "Strangely, no error avaialble.")")
-            }
+            self.defaults.set(email, forKey: "email")
+            completion(true)
         }
     }
     
@@ -203,8 +211,10 @@ class LoginScreen: UIViewController {
         viewGoogle.layer.borderWidth = 1
         viewGoogle.layer.borderColor = UIColor.systemGray5.cgColor
         viewGoogle.layer.cornerRadius = 5
+        
     }
     
+    // check if phone number doesn't exist and verify sms code to login
     @IBAction func enter(_ sender: Any) {
         lbStatus.text = ""
         let phoneNumber = "\(tfPhoneNumber.text!)"
@@ -231,7 +241,7 @@ class LoginScreen: UIViewController {
             btnEnter.isHidden = false
             lbPhoneNumber.isHidden = false
             if(!tfSMSCode.text!.isEmpty) {
-                btnLogin.backgroundColor = #colorLiteral(red: 0.9989940524, green: 0.2311825156, blue: 0.3164890409, alpha: 1)
+                btnLogin.backgroundColor = #colorLiteral(red: 1, green: 0, blue: 0.3841883486, alpha: 1)
             }
         }
         
@@ -245,11 +255,12 @@ class LoginScreen: UIViewController {
         } else {
             lbSMSCode.isHidden = false
             if(!tfPhoneNumber.text!.isEmpty) {
-                btnLogin.backgroundColor = #colorLiteral(red: 0.9989940524, green: 0.2311825156, blue: 0.3164890409, alpha: 1)
+                btnLogin.backgroundColor = #colorLiteral(red: 1, green: 0, blue: 0.3841883486, alpha: 1)
             }
         }
     }
     
+    // login
     @IBAction func btnLogin(_ sender: Any) {
         lbStatus.text = ""
         if !tfPhoneNumber.text!.isEmpty && !tfSMSCode.text!.isEmpty {
@@ -265,23 +276,22 @@ class LoginScreen: UIViewController {
         }
     }
     
+    // login and go to HomeScreen
     func login() {
         lbStatus.text = "Login successfully!".LocalizedString(str: self.language)
         Foundation.UserDefaults.standard.set(true, forKey: "LOG_IN")
                                             
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let homeScreen = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeScreen
-            self.navigationController?.pushViewController(homeScreen, animated: true)
+            let mainScreen = self.storyboard?.instantiateViewController(withIdentifier: "mainScreen") as! MainViewController
+            self.navigationController?.pushViewController(mainScreen, animated: true)
         }
     }
     
+    // change screen to RegisterScreen
     @IBAction func btnRegister(_ sender: Any) {
         let registerScreen = self.storyboard?.instantiateViewController(withIdentifier: "RegiterViewController") as! RegisterScreen
         self.navigationController?.pushViewController(registerScreen, animated: true)
     }
     
-    @objc func tapCheckbox(_ gesture: UITapGestureRecognizer) {
-        print("Clicked")
-    }
-    
 }
+

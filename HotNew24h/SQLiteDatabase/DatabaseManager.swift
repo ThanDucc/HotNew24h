@@ -18,8 +18,6 @@ class DatabaseManager {
     let ID = "id"
     let PHONE_NUMBER = "phone_number"
     let LANGUAGE = "language"
-    let CATEGORY = "category"
-    let KEY_CATEGORY = "key_category"
     
     let FAVOURITE_TABLE = "favourite"
     let SEEN_TABLE = "seen"
@@ -30,6 +28,13 @@ class DatabaseManager {
     let LINK = "link"
     let DESCRIPTION = "description"
     let HTML_STRING = "html_string"
+    
+    let CATEGORY_TABLE = "category"
+    let NAME = "name"
+    let IS_HIDDEN = "is_hidden"
+    let POSITION = "position"
+    let LINK_CATEGORY = "link_category"
+    let TYPE = "type"
     
     // create path to save database
     func getDatabasePath() -> String {
@@ -46,7 +51,7 @@ class DatabaseManager {
         return nil
     }
     
-    // tao database
+    // create database
     func createDatabase() {
         if database == nil {
             if !FileManager.default.fileExists(atPath: getDatabasePath()) {
@@ -55,19 +60,22 @@ class DatabaseManager {
         }
     }
     
-    // Create table
     func createTables() {
         if database.open() {
-            let queryUsersTable = "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " + PHONE_NUMBER + " TEXT NOT NULL, " + LANGUAGE + " TEXT NOT NULL, " + CATEGORY + " TEXT NOT NULL, " + KEY_CATEGORY + " TEXT NOT NULL)"
+            let queryUsersTable = "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " + PHONE_NUMBER + " TEXT NOT NULL, " + LANGUAGE + " TEXT NOT NULL)"
             
             let queryFavouriteTable = "CREATE TABLE IF NOT EXISTS " + FAVOURITE_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL)"
             
             let querySeenTable = "CREATE TABLE IF NOT EXISTS " + SEEN_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL, " + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)"
 
+            let queryCategoryTable = "CREATE TABLE IF NOT EXISTS " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + NAME + " TEXT NOT NULL, " + IS_HIDDEN + " TEXT NOT NULL, " + POSITION + " TEXT NOT NULL, " + LINK_CATEGORY + " TEXT NOT NULL, " + TYPE + " TEXT NOT NULL)"
+            
             do {
                 try database.executeUpdate(queryUsersTable, values: nil)
                 try database.executeUpdate(queryFavouriteTable, values: nil)
                 try database.executeUpdate(querySeenTable, values: nil)
+                try database.executeUpdate(queryCategoryTable, values: nil)
+
             } catch let err {
                 print("Execute query failed. error: \(err.localizedDescription)")
             }
@@ -83,7 +91,7 @@ class DatabaseManager {
             do {
                 let result = try database.executeQuery(querySelect, values: nil)
                 while result.next() {
-                    let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!,language: result.string(forColumnIndex: 2)!, category: result.string(forColumnIndex: 3)!, keyCategory: result.string(forColumnIndex: 4)!)
+                    let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!,language: result.string(forColumnIndex: 2)!)
                     listUsers.append(user)
                 }
             } catch let err {
@@ -113,11 +121,11 @@ class DatabaseManager {
         return false
     }
     
-    func insertAnUser(phoneNumber: String, language: String, category: String, keyCategory: String) {
+    func insertAnUser(phoneNumber: String, language: String) {
         if database.open() {
-            let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + " ," + LANGUAGE + " ," + CATEGORY + " ," + KEY_CATEGORY + ") VALUES (?, ?, ?, ?)"
+            let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + " ," + LANGUAGE + ") VALUES (?, ?)"
             do {
-               try database.executeUpdate(queryInsert, values: [phoneNumber, language, category, keyCategory])
+               try database.executeUpdate(queryInsert, values: [phoneNumber, language])
             } catch let err {
                print("Insert failed, error: \(err.localizedDescription)")
             }
@@ -125,46 +133,83 @@ class DatabaseManager {
         database.close()
     }
     
-    func getListCategory(phoneNumber: String) -> [String] {
-        var listCategory: [String] = []
+    func createCategory(phoneNumber: String) {
+        let nameYouth: [String] = ["Home", "World", "News", "Education", "Sports", "Health", "Science", "Technology", "Business", "Entertainment"]
+        let linkYouthCate: [String] = ["tin-moi-nhat", "the-gioi", "thoi-su", "giao-duc", "the-thao", "suc-khoe", "khoa-hoc", "nhip-song-so", "kinh-doanh", "giai-tri"]
+        
+        let nameVNExpress: [String] = ["Home", "World", "News", "Education", "Sports", "Health", "Science", "Technology", "Business", "Entertainment", "Law", "Tourism"]
+        let linkVNExpressCate: [String] = ["tin-moi-nhat", "the-gioi", "thoi-su", "giao-duc", "the-thao", "suc-khoe", "khoa-hoc", "so-hoa", "kinh-doanh", "giai-tri", "phap-luat", "du-lich"]
         
         if database.open() {
-            let querySelect = "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+            let queryInsert = "INSERT INTO " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " ," + NAME + " ," + IS_HIDDEN + " ," + POSITION + " ," + LINK_CATEGORY + " ," + TYPE + ") VALUES (?, ?, ?, ?, ?, ?)"
+            do {
+                for i in 0 ..< nameYouth.count {
+                    try database.executeUpdate(queryInsert, values: [phoneNumber, nameYouth[i], "false", i.description, "https://tuoitre.vn/rss/" + linkYouthCate[i] + ".rss", "youth"])
+                }
+                for i in 0 ..< nameVNExpress.count {
+                    try database.executeUpdate(queryInsert, values: [phoneNumber, nameVNExpress[i], "false", i.description, "https://vnexpress.net/rss/" + linkVNExpressCate[i] + ".rss", "vnexpress"])
+                }
+            } catch let err {
+               print("Insert failed, error: \(err.localizedDescription)")
+            }
+        }
+        database.close()
+    }
+    
+    func getListCategory(phoneNumber: String, type: String) -> [Category] {
+        var listCategory: [Category] = []
+        if database.open() {
+            let querySelect = "SELECT * FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "'"
             do {
                 let result = try database.executeQuery(querySelect, values: nil)
                 while result.next() {
-                    let stringList = result.string(forColumnIndex: 3)!
-                    listCategory = stringList.components(separatedBy: "|")
-                    return listCategory
+                    let category = Category(phoneNumber: result.string(forColumnIndex: 0)!, name: result.string(forColumnIndex: 1)!, isHidden: result.string(forColumnIndex: 2)!, position: Int(result.int(forColumnIndex: 3)), linkCategory: result.string(forColumnIndex: 4)!, type: result.string(forColumnIndex: 5)!)
+                    listCategory.append(category)
                 }
             } catch let err {
                print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
+        listCategory = listCategory.sorted { $0.position < $1.position }
         
         return listCategory
     }
     
-    func getListKeyUrl(phoneNumber: String) -> [String] {
-        var listKeyUrl: [String] = []
-        
+    func updateCategory(phoneNumber: String, position: Int, name: String, type: String) {
         if database.open() {
-            let querySelect = "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+            let queryDelete = "UPDATE " + CATEGORY_TABLE + " SET " + POSITION + " = '" + String(position) + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "' AND " + NAME + " = '" + name + "'"
             do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let stringList = result.string(forColumnIndex: 4)!
-                    listKeyUrl = stringList.components(separatedBy: "|")
-                    return listKeyUrl
-                }
+               try database.executeUpdate(queryDelete, values: nil)
             } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
+               print("Update failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
-        
-        return listKeyUrl
+    }
+    
+    func updateCategory(phoneNumber: String, isHidden: String, name: String, type: String) {
+        if database.open() {
+            let queryDelete = "UPDATE " + CATEGORY_TABLE + " SET " + IS_HIDDEN + " = '" + isHidden + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "' AND " + NAME + " = '" + name + "'"
+            do {
+               try database.executeUpdate(queryDelete, values: nil)
+            } catch let err {
+               print("Update failed, error: \(err.localizedDescription)")
+            }
+        }
+        database.close()
+    }
+    
+    func deleteCategory(phoneNumber: String) {
+        if database.open() {
+            let queryDelete = "DELETE FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+            do {
+               try database.executeUpdate(queryDelete, values: nil)
+            } catch let err {
+               print("Delete failed, error: \(err.localizedDescription)")
+            }
+        }
+        database.close()
     }
     
     func getLanguage(phoneNumber: String) -> String {
@@ -209,17 +254,6 @@ class DatabaseManager {
         database.close()
     }
     
-    func updateCategory(phoneNumber: String, category: String, keyCategory: String) {
-        if database.open() {
-            let queryDelete = "UPDATE " + USERS_TABLE + " SET " + CATEGORY + " = '" + category + "', " + KEY_CATEGORY + " = '" + keyCategory + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Update failed, error: \(err.localizedDescription)")
-            }
-        }
-        database.close()
-    }
     
     func addToFavourite(phoneNumber: String, title: String, pubDate: String, description: String, imgLink: String, htmlString: String, link: String) {
         if database.open() {

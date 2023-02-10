@@ -9,20 +9,16 @@ import UIKit
 import Foundation
 
 protocol CategoryDelegate: AnyObject {
-    func collectionViewSelectCell(index: Int)
+    func clickMore()
     func tableViewSelectCell(news: News, bool: Bool)
-}
-
-protocol Index: AnyObject {
-    func indexCategory(index: Int)
 }
 
 class TuoiTreScreen: UIViewController {
     var listTittle:[String] = []
-    var listKeyURL:[String] = []
-    
-    var url = ""
-    var screen = 0
+    var listURL:[String] = []
+    var type: String = "youth"
+    let YOUTH = "youth"
+    let VNEXPRESS = "vnexpress"
     
     var list: [News] = []
     var language = ""
@@ -33,70 +29,142 @@ class TuoiTreScreen: UIViewController {
     @IBOutlet weak var cvCategory: UICollectionView!
     @IBOutlet weak var tbListTittle: UITableView!
     @IBOutlet weak var indicatior: UIActivityIndicatorView!
+    @IBOutlet weak var lbTittle: UILabel!
+    @IBOutlet weak var btnShowMenu: UIButton!
     
     let refreshControl = UIRefreshControl()
     
     weak var delegateCate: CategoryDelegate?
-    weak var delegateIndex: Index?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if MainViewController.type != "" {
+            type = MainViewController.type
+        }
+        
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
-        self.language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        getLanguage(completion: { success in
+            if success {
+                if self.type == self.YOUTH {
+                    self.lbTittle.text = "Youth".LocalizedString(str: self.language)
+                    self.index = LoginScreen.indexYouthCate
+                } else if self.type == self.VNEXPRESS {
+                    self.lbTittle.text = "VNExpress".LocalizedString(str: self.language)
+                    self.index = LoginScreen.indexVNExCate
+                }
+            }
+        })
         
-        listTittle = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber)
-        listKeyURL = DatabaseManager.shared.getListKeyUrl(phoneNumber: phoneNumber)
-
-        listTittle.append("More")
+        getListCategory(completion: { success in
+            self.getAndDisplayData(index: self.index, indicatorHidden: true)
+            self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
+        })
         
-        getAndDisplayData(index: index)
-
-        cvCategory.dataSource = self
-        cvCategory.delegate = self
+        self.tbListTittle.dataSource = self
+        self.tbListTittle.delegate = self
+        
+        let nib = UINib(nibName: "ListTitleCell", bundle: nil)
+        tbListTittle.register(nib, forCellReuseIdentifier: "Cell_2")
         
         self.refreshControl.addTarget(self, action: #selector(refresh), for: UIControl.Event.valueChanged)
         tbListTittle.addSubview(refreshControl)
         
-        let nib = UINib(nibName: "ListTitleCell", bundle: nil)
-        tbListTittle.register(nib, forCellReuseIdentifier: "Cell_2")
+        btnShowMenu.addTarget(revealViewController(), action: #selector(self.revealViewController()?.revealSideMenu), for: .touchUpInside)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notificationReceived), name: Notification.Name("Language Changed"), object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notificationFavouriteReceived), name: Notification.Name("Favourite Changed"), object: nil)
     }
     
-    @objc func refresh(sender:AnyObject) {
-        getAndDisplayData(index: index)
+    @objc func notificationFavouriteReceived() {
+        tbListTittle.reloadData()
     }
     
-    func getAndDisplayData(index: Int) {
-        indicatior.startAnimating()
-        indicatior.isHidden = false
-        tbListTittle.dataSource = nil
-        tbListTittle.delegate = nil
+    @objc func notificationReceived() {
+        getLanguage(completion: { success in
+            if success {
+                self.cvCategory.reloadData()
+                self.lbTittle.text = self.lbTittle.text!.LocalizedString(str: self.language)
+            }
+        })
+    }
+    
+    // pull to refresh data
+    @objc func refresh(sender: AnyObject) {
+        self.indicatior.stopAnimating()
+        self.indicatior.isHidden = true
+        getAndDisplayData(index: index, indicatorHidden: false)
+    }
+    
+    func getLanguage(completion: @escaping(Bool) -> Void) {
+        // get language
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            completion(true)
+        })
+    }
+    
+    // get list category
+    func getListCategory(completion: @escaping(Bool) -> Void) {
+        listTittle = []
+        listURL = []
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let category: [Category] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: { [self] in
+            for i in 0..<category.count {
+                if category[i].isHidden == "false" {
+                    self.listTittle.append(category[i].name)
+                    self.listURL.append(category[i].linkCategory)
+                }
+            }
+            self.listTittle.append("More")
+            cvCategory.dataSource = self
+            cvCategory.delegate = self
+            completion(true)
+        })
+    }
+    
+    // when user click a category, we get the index and display table with index
+    func getAndDisplayData(index: Int, indicatorHidden: Bool) {
+        if indicatorHidden {
+            indicatior.startAnimating()
+            indicatior.isHidden = false
+        }
+        list = []
         tbListTittle.reloadData()
         
-        switch screen {
-        case 0:
-            let xml = ParseXML()
-            xml.getEpisode(urlString: url + listKeyURL[index] + ".rss", completion: { [self] success in
-                if success {
-                    self.update(list: xml.listNews)
-                }
-            })
-            break
-        default:
-            let xml = ParseXML_VNExpress()
-            xml.getEpisode(urlString: url + listKeyURL[index] + ".rss", completion: { [self] success in
-                if success {
-                    self.update(list: xml.listNews)
-                }
-            })
+        DispatchQueue.global().async {
+            switch self.type {
+            case "youth":
+                let xml = ParseXML()
+                xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
+                    if success {
+                        self.update(list: xml.listNews)
+                    }
+                })
+                break
+            default:
+                let xml = ParseXML_VNExpress()
+                xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
+                    if success {
+                        self.update(list: xml.listNews)
+                    }
+                })
+            }
         }
+        
     }
     
     func update(list: [News]) {
         DispatchQueue.main.async {
             self.list = list
-            self.tbListTittle.dataSource = self
-            self.tbListTittle.delegate = self
             self.tbListTittle.reloadData()
             self.indicatior.stopAnimating()
             self.indicatior.isHidden = true
@@ -110,9 +178,9 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         return list.count
     }
     
+    // display a new include: title, description, image, date time
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell_2") as! ListNewsCell
-        cell.delegate = self
         
         cell.lbTittleNew.text = list[indexPath.row].title
         cell.lbDesNew.text = list[indexPath.row].description
@@ -121,28 +189,113 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         formatDate.dateFormat = "E, dd MMM yyyy HH:mm:ss"
         cell.lbDateTime.text = list[indexPath.row].pubDate
         
+        cell.imgNew.image = nil
+        cell.indicator.startAnimating()
+        cell.indicator.isHidden = false
+        
+        cell.indicatorFavourite.isHidden = true
+        cell.btnFavourite.isHidden = false
+        
         if !list[indexPath.row].imgLink.isEmpty {
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
             let url: URL = URL(string: list[indexPath.row].imgLink)!
-            let data: Data = try! Data(contentsOf: url)
-            cell.imgNew.image = UIImage(data: data)
-            cell.imgLink = UIImage(data: data)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+            var data: Data?
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                print("Error")
+            }
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                cell.indicator.stopAnimating()
+                cell.indicator.isHidden = true
+                if data != nil {
+                    cell.imgNew.image = UIImage(data: data!)
+                    cell.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+                }
+            })
         }
     
         cell.new = list[indexPath.row]
         
-        if DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber) {
-            cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-        } else {
-            cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-        }
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let check: Bool = DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            if check {
+                cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+            } else {
+                cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            }
+        })
+        
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor.white
+        cell.selectedBackgroundView = backgroundView
         
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        delegateCate?.tableViewSelectCell(news: list[indexPath.row], bool: true)
-        delegateIndex?.indexCategory(index: self.index)
+        let displayNewsScreen = self.storyboard?.instantiateViewController(withIdentifier: "displaySC") as! DisplayNewsScreen
+        displayNewsScreen.news = list[indexPath.row]
+        
+        if !list[indexPath.row].imgLink.isEmpty {
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            let url: URL = URL(string: list[indexPath.row].imgLink)!
+            var data: Data?
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                print("Error")
+            }
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                if data != nil {
+                    displayNewsScreen.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+                    self.navigationController?.pushViewController(displayNewsScreen, animated: false)
+                }
+            })
+        }
+        addSeenList(news: list[indexPath.row])
+        tbListTittle.deselectRow(at: indexPath, animated: false)
     }
+    
+    func addSeenList(news: News) {
+        var imgLink: String = ""
+        if news.imgLink.contains("https") {
+            let url: URL = URL(string: news.imgLink)!
+            let data: Data = try! Data(contentsOf: url)
+            imgLink = UIImage(data: data)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+        }
+        
+        var htmlString = ""
+        htmlString = try! String(contentsOf: URL(string: news.link)!) 
+
+        let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
+        
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            if check {
+                let dispatch = DispatchGroup()
+                dispatch.enter()
+                DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
+                dispatch.leave()
+                dispatch.notify(queue: .main, execute: {
+                    DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
+                })
+            } else {
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
+            }
+        })
+    }
+    
 }
     
 extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -153,10 +306,12 @@ extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, U
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "COLLECTION", for: indexPath) as! CategoryTuoiTreCell
+        
+        // if category clicked, change the background color of category
         if indexPath.row == index {
-            cell.viewCell.backgroundColor = UIColor.red
+            cell.viewCell.backgroundColor = #colorLiteral(red: 1, green: 0.4552601329, blue: 0, alpha: 1)
         } else {
-            cell.viewCell.backgroundColor = UIColor.systemTeal
+            cell.viewCell.backgroundColor = #colorLiteral(red: 0, green: 0.5949241789, blue: 1, alpha: 1)
         }
         cell.lbTittle.text = listTittle[indexPath.row].LocalizedString(str: language)
         return cell
@@ -174,24 +329,46 @@ extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, U
         return 1
     }
     
+    // check if category clicked != more, assign index = indexPath.row
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.row != 10 {
+        if indexPath.row != (listTittle.count - 1) {
             self.index = indexPath.row
         }
         self.cvCategory.reloadData()
-        if indexPath.row != 10 {
-            getAndDisplayData(index: indexPath.row)
+        
+        if self.type == self.YOUTH {
+            LoginScreen.indexYouthCate = self.index
+        } else if self.type == self.VNEXPRESS {
+            LoginScreen.indexVNExCate = self.index
+        }
+        
+        // if category != more, display data by index
+        if indexPath.row != (listTittle.count - 1) {
+            getAndDisplayData(index: indexPath.row, indicatorHidden: true)
         } else {
-            delegateCate?.collectionViewSelectCell(index: indexPath.row)
+            // case click more, display sort Category screen
+            let sortCateScreen = self.storyboard?.instantiateViewController(withIdentifier: "sortCate") as! SortCategoryTuoiTre
+            sortCateScreen.type = type
+            sortCateScreen.delegateSortCate = self
+            sortCateScreen.nameCate = listTittle[index]
+            self.navigationController?.pushViewController(sortCateScreen, animated: true)
         }
     }
     
 }
 
-extension TuoiTreScreen: ResetTable {
-    func deleteFavourite(tittle: String) {
-        DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
-        tbListTittle.reloadData()
+extension TuoiTreScreen: UpdateCategory {
+    
+    func update(nameCate: String) {
+        getListCategory(completion: { [self] success in
+            if let newIndex = self.listTittle.firstIndex(of: nameCate) {
+                self.index = newIndex
+            } else {
+                self.index = 0
+                self.getAndDisplayData(index: self.index, indicatorHidden: true)
+            }
+            self.cvCategory.reloadData()
+            self.cvCategory.scrollToItem(at:IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: false)
+        })
     }
-
 }

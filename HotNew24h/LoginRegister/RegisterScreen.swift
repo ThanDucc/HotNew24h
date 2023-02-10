@@ -25,7 +25,25 @@ class RegisterScreen: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        // get phone number to get languge to display UI
+        let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
+        if phoneNumber == nil {
+            language = "en"
+            self.setupUI()
+        } else {
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                self.language = language
+                self.setupUI()
+            })
+        }
+    }
+    
+    func setupUI() {
         lbPhoneNumber.isHidden = true
         lbSMSCode.isHidden = true
         
@@ -34,17 +52,6 @@ class RegisterScreen: UIViewController {
         
         btnEnter.isHidden = true
         
-        let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
-        if phoneNumber == nil {
-            language = "en"
-        } else {
-            language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-        }
-        
-        setupUI()
-    }
-    
-    func setupUI() {
         lbRegisterTittle.text = lbRegisterTittle.text?.LocalizedString(str: language)
         lbPhoneNumber.text = lbPhoneNumber.text?.LocalizedString(str: language)
         tfPhoneNumber.placeholder = tfPhoneNumber.placeholder?.LocalizedString(str: language)
@@ -64,7 +71,7 @@ class RegisterScreen: UIViewController {
             btnEnter.isHidden = false
             lbPhoneNumber.isHidden = false
             if(!tfSMSCode.text!.isEmpty) {
-                btnRegister.backgroundColor = #colorLiteral(red: 0.9989940524, green: 0.2311825156, blue: 0.3164890409, alpha: 1)
+                btnRegister.backgroundColor = #colorLiteral(red: 1, green: 0, blue: 0.3841883486, alpha: 1)
             }
         }
     }
@@ -77,7 +84,7 @@ class RegisterScreen: UIViewController {
         } else {
             lbSMSCode.isHidden = false
             if(!tfPhoneNumber.text!.isEmpty) {
-                btnRegister.backgroundColor = #colorLiteral(red: 0.9989940524, green: 0.2311825156, blue: 0.3164890409, alpha: 1)
+                btnRegister.backgroundColor = #colorLiteral(red: 1, green: 0, blue: 0.3841883486, alpha: 1)
             }
         }
     }
@@ -103,22 +110,24 @@ class RegisterScreen: UIViewController {
     
     @IBAction func btnRegister(_ sender: Any) {
         let code = tfSMSCode.text!
-        AuthManager.shared.verifyCode(smsCode: code, completion: { success in
-            if !success {
-                self.lbStatus.text = "SMS code is incorrect!".LocalizedString(str: self.language)
-            } else {
-                self.lbStatus.text = "Register successfully!".LocalizedString(str: self.language)
-                self.defaults.set(self.tfPhoneNumber.text!, forKey: "userPhoneNumber")
-                
-                Register().registerAccount(userId: self.tfPhoneNumber.text!)
-                Foundation.UserDefaults.standard.set(true, forKey: "LOG_IN")
-                                                    
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    let homeScreen = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeScreen
-                    self.navigationController?.pushViewController(homeScreen, animated: true)
+        if !tfPhoneNumber.text!.isEmpty && !tfSMSCode.text!.isEmpty {
+            AuthManager.shared.verifyCode(smsCode: code, completion: { success in
+                if !success {
+                    self.lbStatus.text = "SMS code is incorrect!".LocalizedString(str: self.language)
+                } else {
+                    self.lbStatus.text = "Register successfully!".LocalizedString(str: self.language)
+                    self.defaults.set(self.tfPhoneNumber.text!, forKey: "userPhoneNumber")
+                    
+                    Register().registerAccount(userId: self.tfPhoneNumber.text!)
+                    Foundation.UserDefaults.standard.set(true, forKey: "LOG_IN")
+                                                        
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        let mainScreen = self.storyboard?.instantiateViewController(withIdentifier: "mainScreen") as! MainViewController
+                        self.navigationController?.pushViewController(mainScreen, animated: true)
+                    }
                 }
-            }
-        })
+            })
+        }
     }
     
     func isValidPhone(phone: String) -> Bool {
@@ -128,8 +137,7 @@ class RegisterScreen: UIViewController {
     }
     
     @IBAction func btnLogin(_ sender: Any) {
-        let login = self.navigationController?.storyboard?.instantiateViewController(withIdentifier: "login") as! LoginScreen
-        self.navigationController?.pushViewController(login, animated: true)
+        self.navigationController?.popViewController(animated: true)
     }
     
 }

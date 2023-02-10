@@ -18,9 +18,12 @@ class DeleteAcc: UIViewController {
     @IBOutlet weak var lblWarning: UILabel!
     @IBOutlet weak var tfSMSCode: UITextField!
     
+    @IBOutlet weak var distance: NSLayoutConstraint!
+    
     @IBOutlet weak var lbStatus: UILabel!
     @IBOutlet weak var btnYes: UIButton!
     @IBOutlet weak var btnCancel: UIButton!
+    @IBOutlet weak var indicator: UIActivityIndicatorView!
     
     var bool = false
     var delegateDelete: DeleteAccountClicked?
@@ -30,54 +33,112 @@ class DeleteAcc: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        indicator.isHidden = true
 
-        self.language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-        lblWarning.text = lblWarning.text?.LocalizedString(str: language)
-        lblDeleteAcc.text = lblDeleteAcc.text?.LocalizedString(str: language)
-        tfSMSCode.placeholder = tfSMSCode.placeholder?.LocalizedString(str: language)
-        btnYes.setTitle(btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-        btnCancel.setTitle(btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-        lbStatus.text = lbStatus.text?.LocalizedString(str: language)
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
+            self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
+            self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
+            self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+            self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+            self.lbStatus.text = self.lbStatus.text?.LocalizedString(str: language)
+        })
         
         tfSMSCode.isHidden = true
+        distance.constant = 0
     }
+    
+    func sendSMS() {
+        let phoneNumber = "\(self.phoneNumber ?? "")"
 
+        AuthManager.shared.startAuth(phoneNumber: phoneNumber, completion: { success in
+            guard success else {
+                self.lbStatus.text = "Error to send SMS".LocalizedString(str: self.language)
+                return
+            }
+            self.tfSMSCode.isHidden = false
+            self.distance.constant = 35
+        })
+    }
+    
+    func deleteAcc() {
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        DatabaseManager.shared.deleteUserRow(phoneNumber: self.phoneNumber!)
+        dispatchGroup.leave()
+        
+        dispatchGroup.enter()
+        DatabaseManager.shared.deleteFavouriteRow(phoneNumber: self.phoneNumber!)
+        dispatchGroup.leave()
+        
+        dispatchGroup.enter()
+        DatabaseManager.shared.deleteSeenRow(phoneNumber: self.phoneNumber!)
+        dispatchGroup.leave()
+        
+        dispatchGroup.enter()
+        DatabaseManager.shared.deleteCategory(phoneNumber: self.phoneNumber!)
+        dispatchGroup.leave()
+        
+        Foundation.UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
+        Foundation.UserDefaults.standard.removeObject(forKey: "LOG_IN")
+        
+        LoginScreen.indexVNExCate = 0
+        LoginScreen.indexYouthCate = 0
+        MainViewController.type = ""
+        
+        indicator.stopAnimating()
+
+        self.lbStatus.text = "Delete account successfully!".LocalizedString(str: self.language)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+            self.delegateDelete?.deleteAcc(status: true)
+        }
+    }
+    
+    func deleteAccByPhoneNumber() {
+        let smsCode = tfSMSCode.text
+        AuthManager.shared.deleteAccountByPhoneNumber(smsCode: smsCode!, completion: { success in
+            guard success else {
+                self.lbStatus.text = "SMS is invalid!".LocalizedString(str: self.language)
+                return
+            }
+            self.deleteAcc()
+        })
+    }
+    
+    func deleteAccByEmail() {
+        AuthManager.shared.deleteAccountByEmail(completion: { success in
+            guard success else {
+                self.lbStatus.text = "Delete account failed".LocalizedString(str: self.language)
+                return
+            }
+            self.deleteAcc()
+        })
+    }
+    
     // SDK Android và iOS hiện không hỗ trợ tái xác thực.
     
     @IBAction func btnYesClicked(_ sender: Any) {
-        if !bool {
-            let phoneNumber = "\(self.phoneNumber ?? "")"
-
-            AuthManager.shared.startAuth(phoneNumber: phoneNumber, completion: { success in
-                guard success else {
-                    print("Error to send SMS")
-                    return
-                }
-            })
-            tfSMSCode.isHidden = false
-            bool = true
+        let user = Auth.auth().currentUser
+        if user?.phoneNumber != nil {
+            if !bool {
+                sendSMS()
+                bool = true
+            } else {
+                indicator.startAnimating()
+                indicator.isHidden = false
+                deleteAccByPhoneNumber()
+            }
         } else {
-            let smsCode = tfSMSCode.text
-
-            AuthManager.shared.deleteAccount(smsCode: smsCode!, completion: { success in
-                guard success else {
-                    print("Error")
-                    self.lbStatus.text = "SMS is invalid!".LocalizedString(str: self.language)
-                    return
-                }
-
-                DatabaseManager.shared.deleteUserRow(phoneNumber: self.phoneNumber!)
-                DatabaseManager.shared.deleteFavouriteRow(phoneNumber: self.phoneNumber!)
-                DatabaseManager.shared.deleteSeenRow(phoneNumber: self.phoneNumber!)
-                Foundation.UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
-
-                self.lbStatus.text = "Delete account successfully!".LocalizedString(str: self.language)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    self.delegateDelete?.deleteAcc(status: true)
-                }
-            })
+            indicator.startAnimating()
+            indicator.isHidden = false
+            deleteAccByEmail()
         }
-
     }
     
     @IBAction func btnCancelClicked(_ sender: Any) {

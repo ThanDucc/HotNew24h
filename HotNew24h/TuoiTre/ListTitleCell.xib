@@ -16,8 +16,8 @@
                 <rect key="frame" x="0.0" y="0.0" width="414" height="102"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="trash.circle.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="TCD-Hp-3dZ">
-                        <rect key="frame" x="25" y="45" width="100" height="59"/>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TCD-Hp-3dZ">
+                        <rect key="frame" x="25" y="44.5" width="100" height="60"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="100" id="FpR-XY-6sS"/>
                             <constraint firstAttribute="height" constant="60" id="mo4-vK-0Be"/>
@@ -74,12 +74,21 @@
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="8bF-E5-gOL">
+                        <rect key="frame" x="65" y="64.5" width="20" height="20"/>
+                    </activityIndicatorView>
+                    <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" hidesWhenStopped="YES" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="uJO-Pg-ZFb">
+                        <rect key="frame" x="366" y="13" width="20" height="20"/>
+                    </activityIndicatorView>
                 </subviews>
                 <constraints>
+                    <constraint firstItem="8bF-E5-gOL" firstAttribute="centerY" secondItem="TCD-Hp-3dZ" secondAttribute="centerY" id="1zf-My-0tN"/>
                     <constraint firstItem="SLr-EW-2vu" firstAttribute="trailing" secondItem="pDN-RQ-rpT" secondAttribute="trailing" id="4SB-lH-kTu"/>
                     <constraint firstItem="FC3-sS-8jZ" firstAttribute="top" secondItem="SLr-EW-2vu" secondAttribute="bottom" constant="10" id="5Mh-x1-rNJ"/>
                     <constraint firstItem="NiF-vI-Q63" firstAttribute="trailing" secondItem="pDN-RQ-rpT" secondAttribute="trailing" id="5l1-Qh-ZgF"/>
+                    <constraint firstItem="8bF-E5-gOL" firstAttribute="centerX" secondItem="TCD-Hp-3dZ" secondAttribute="centerX" id="AAW-av-C1f"/>
                     <constraint firstAttribute="trailing" secondItem="pDN-RQ-rpT" secondAttribute="trailing" constant="25" id="C44-RH-J3U"/>
+                    <constraint firstItem="uJO-Pg-ZFb" firstAttribute="top" secondItem="pDN-RQ-rpT" secondAttribute="top" id="H2G-Qh-218"/>
                     <constraint firstItem="pDN-RQ-rpT" firstAttribute="leading" secondItem="dkA-tc-via" secondAttribute="trailing" constant="5" id="Hjq-89-iZ8"/>
                     <constraint firstItem="TCD-Hp-3dZ" firstAttribute="top" secondItem="dkA-tc-via" secondAttribute="bottom" constant="14" id="IW8-QE-9Yq"/>
                     <constraint firstAttribute="bottom" secondItem="FC3-sS-8jZ" secondAttribute="bottom" constant="10" id="JkO-vg-9sg"/>
@@ -89,6 +98,7 @@
                     <constraint firstItem="FC3-sS-8jZ" firstAttribute="leading" secondItem="dkA-tc-via" secondAttribute="leading" id="aLv-sH-fo6"/>
                     <constraint firstItem="SLr-EW-2vu" firstAttribute="leading" secondItem="str-Sj-aH6" secondAttribute="leading" id="brK-B2-8H1"/>
                     <constraint firstItem="dkA-tc-via" firstAttribute="leading" secondItem="teK-Qc-bPO" secondAttribute="leading" constant="25" id="f6K-sP-vWV"/>
+                    <constraint firstItem="uJO-Pg-ZFb" firstAttribute="centerX" secondItem="pDN-RQ-rpT" secondAttribute="centerX" id="i7y-aL-lqy"/>
                     <constraint firstItem="str-Sj-aH6" firstAttribute="top" secondItem="NiF-vI-Q63" secondAttribute="bottom" constant="5" id="juU-Kv-uqa"/>
                     <constraint firstItem="NiF-vI-Q63" firstAttribute="leading" secondItem="str-Sj-aH6" secondAttribute="leading" id="m9Z-8f-TWh"/>
                     <constraint firstItem="NiF-vI-Q63" firstAttribute="top" secondItem="dkA-tc-via" secondAttribute="bottom" constant="5" id="mJG-yn-F39"/>
@@ -101,17 +111,18 @@
             <connections>
                 <outlet property="btnFavourite" destination="pDN-RQ-rpT" id="1i4-9e-BgN"/>
                 <outlet property="imgNew" destination="TCD-Hp-3dZ" id="3eV-po-e8A"/>
+                <outlet property="indicator" destination="8bF-E5-gOL" id="YXm-NI-c73"/>
+                <outlet property="indicatorFavourite" destination="uJO-Pg-ZFb" id="CFE-Wu-JGF"/>
                 <outlet property="lbDateTime" destination="FC3-sS-8jZ" id="lIt-I1-P9f"/>
                 <outlet property="lbDesNew" destination="str-Sj-aH6" id="m6z-o2-G7A"/>
                 <outlet property="lbTittleNew" destination="dkA-tc-via" id="SAk-Rw-Ply"/>
                 <outlet property="view" destination="teK-Qc-bPO" id="9fj-89-ieC"/>
             </connections>
-            <point key="canvasLocation" x="-16" y="124"/>
+            <point key="canvasLocation" x="-17.39130434782609" y="123.88392857142857"/>
         </tableViewCell>
     </objects>
     <resources>
         <image name="heart" catalog="system" width="128" height="109"/>
-        <image name="trash.circle.fill" catalog="system" width="128" height="121"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

@@ -10,6 +10,8 @@ import UIKit
 class FavouriteScreen: UIViewController {
 
     @IBOutlet weak var tbListFavourite: UITableView!
+    @IBOutlet weak var btnShowMenu: UIButton!
+    @IBOutlet weak var lbTittle: UILabel!
     var list: [News] = []
     weak var delegateCate: CategoryDelegate?
     var phoneNumber = ""
@@ -27,15 +29,59 @@ class FavouriteScreen: UIViewController {
         let Nib = UINib(nibName: "LoadMoreCell", bundle: nil)
         tbListFavourite.register(Nib, forCellReuseIdentifier: "loadmore")
         
-        phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
-        language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        self.tbListFavourite.delegate = self
+        self.tbListFavourite.dataSource = self
         
-        list = DatabaseManager.shared.getFavouriteList(phoneNumber: phoneNumber, page: page)
-        count = list.count
-
-        tbListFavourite.delegate = self
-        tbListFavourite.dataSource = self
-        tbListFavourite.reloadData()
+        phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
+        getLanguage(completion: { success in
+            self.lbTittle.text = "Favourite".LocalizedString(str: self.language)
+            self.getFavouriteList()
+        })
+        
+        btnShowMenu.addTarget(revealViewController(), action: #selector(self.revealViewController()?.revealSideMenu), for: .touchUpInside)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notificationLanguageReceived), name: Notification.Name("Language Changed"), object: nil)
+        
+        btnShowMenu.tintAdjustmentMode = .normal
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(notificationFavouriteReceived), name: Notification.Name("Favourite Changed"), object: nil)
+    }
+    
+    @objc func notificationFavouriteReceived() {
+        self.getFavouriteList()
+    }
+    
+    @objc func notificationLanguageReceived() {
+        getLanguage(completion: { success in
+            if success {
+                self.lbTittle.text = "Favourite".LocalizedString(str: self.language)
+            }
+        })
+    }
+    
+    func getLanguage(completion: @escaping(Bool) -> Void) {
+        // get language
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            completion(true)
+        })
+    }
+    
+    func getFavouriteList() {
+        self.page = 0
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let list = DatabaseManager.shared.getFavouriteList(phoneNumber: phoneNumber, page: page)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.list = list
+            self.count = self.list.count
+            self.tbListFavourite.reloadData()
+        })
     }
     
 }
@@ -68,27 +114,82 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
             let formatDate = DateFormatter()
             cell.delegate = self
             
+            cell.indicator.startAnimating()
+            cell.indicator.isHidden = false
+            
             formatDate.dateFormat = "E, dd MMM yyyy HH:mm:ss"
             cell.lbDateTime.text = list[indexPath.row].pubDate
             
-            let dataDecoded: Data = Data(base64Encoded: list[indexPath.row].imgLink)!
-            cell.imgNew.image = UIImage(data: dataDecoded)
-            
-            if DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber) {
-                cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-            } else {
-                cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            if !list[indexPath.row].imgLink.isEmpty {
+                let dataDecoded: Data = Data(base64Encoded: list[indexPath.row].imgLink)!
+                cell.imgNew.image = UIImage(data: dataDecoded)
+                cell.indicator.stopAnimating()
+                cell.indicator.isHidden = true
             }
+            
+            cell.new = list[indexPath.row]
+            
+            let dispatchGroup = DispatchGroup()
+            dispatchGroup.enter()
+            let check: Bool = DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber)
+            dispatchGroup.leave()
+            dispatchGroup.notify(queue: .main, execute: {
+                if check {
+                    cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                } else {
+                    cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                }
+            })
+            cell.screen = "Favourite"
+            
+            let backgroundView = UIView()
+            backgroundView.backgroundColor = UIColor.white
+            cell.selectedBackgroundView = backgroundView
+            
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "loadmore", for: indexPath) as! LoadMoreCell
             cell.indicator.startAnimating()
+            
+            let backgroundView = UIView()
+            backgroundView.backgroundColor = UIColor.white
+            cell.selectedBackgroundView = backgroundView
+            
             return cell
         }
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        delegateCate?.tableViewSelectCell(news: list[indexPath.row], bool: false)
+        let displayNewsScreen = self.storyboard?.instantiateViewController(withIdentifier: "displaySC") as! DisplayNewsScreen
+        displayNewsScreen.news = list[indexPath.row]
+        displayNewsScreen.imgLink = list[indexPath.row].imgLink
+        addSeenList(news: list[indexPath.row])
+        
+        self.navigationController?.pushViewController(displayNewsScreen, animated: false)
+        tbListFavourite.deselectRow(at: indexPath, animated: false)
+
+    }
+    
+    func addSeenList(news: News) {
+        let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
+        
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            if check {
+                let dispatch = DispatchGroup()
+                dispatch.enter()
+                DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
+                dispatch.leave()
+                dispatch.notify(queue: .main, execute: {
+                    DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
+                })
+            } else {
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
+            }
+        })
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -122,7 +223,10 @@ extension FavouriteScreen: ResetTable {
         let alertActionCancel = UIAlertAction(title: "Cancel".LocalizedString(str: language), style: .default, handler: { _ in })
 
         let alertActionOK = UIAlertAction(title: "Yes".LocalizedString(str: language), style: .destructive, handler: { _ in
-            DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: self.phoneNumber)
+            DispatchQueue.global().async(execute: {
+                DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: self.phoneNumber)
+            })
+            
             var index = 0
             for i in 0..<self.list.count {
                 if self.list[i].title == tittle {

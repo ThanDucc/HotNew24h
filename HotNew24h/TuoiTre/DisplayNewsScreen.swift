@@ -8,18 +8,36 @@
 import UIKit
 import WebKit
 
+protocol FavouriteChange {
+    func favouriteChange(index: Int)
+}
+
 class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     
     @IBOutlet weak var lbShare: UILabel!
     var news: News = News(title: "", pubDate: "", link: "", description: "", imgLink: "", htmlString: "")
     var language = ""
     var phoneNumber = ""
+    var imgLink = ""
+    var index = 0
     
     @IBOutlet weak var webView: WKWebView!
     @IBOutlet weak var indicator: UIActivityIndicatorView!
     @IBOutlet weak var btnFavourite: UIButton!
-    var delegate: ResetTable?
     @IBOutlet weak var imgShare: UIImageView!
+    @IBOutlet weak var btnBack: UIButton!
+    
+    var delegateFavouriteChange: FavouriteChange?
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.revealViewController()?.gestureEnabled = false
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.revealViewController()?.gestureEnabled = true
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,20 +45,36 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
         indicator.isHidden = false
         
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
-        self.language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
         
-        lbShare.text = lbShare.text?.LocalizedString(str: language)
-        
-        if DatabaseManager.shared.checkFavourite(tittle: news.title, phoneNumber: phoneNumber) {
-            btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-        } else {
-            btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-        }
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            self.btnBack.setTitle(self.btnBack.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+            self.lbShare.text = self.lbShare.text?.LocalizedString(str: language)
+        })
+       
+        dispatchGroup.enter()
+        let check: Bool = DatabaseManager.shared.checkFavourite(tittle: news.title, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            if check {
+                self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+            } else {
+                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            }
+        })
         
         webView.navigationDelegate = self
+        dispatchGroup.enter()
         let urlRequest = URL(string: news.link)!
         let request = URLRequest(url: urlRequest)
-        webView.load(request)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.webView.load(request)
+        })
         
         indicator.stopAnimating()
         indicator.isHidden = true
@@ -61,6 +95,10 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
         self.present(activityViewController, animated: true, completion: nil)
     }
     
+    @IBAction func btnBackClicked(_ sender: Any) {
+        self.navigationController?.popViewController(animated: true)
+    }
+    
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         if let err = error as? URLError, err.code == .notConnectedToInternet {
             self.webView.loadHTMLString(news.htmlString, baseURL: nil)
@@ -71,17 +109,48 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     
     @IBAction func btnFavouriteClick(_ sender: Any) {
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
-        if !DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: phoneNumber) {
-            var htmlString = news.htmlString
-            if htmlString.isEmpty {
-                htmlString = try! String(contentsOf: URL(string: news.link)!)
+        
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let check = DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: { [self] in
+            if !check {
+                var htmlString = self.news.htmlString
+                let dispatch = DispatchGroup()
+                if htmlString.isEmpty {
+                    dispatch.enter()
+                    htmlString = try! String(contentsOf: URL(string: self.news.link)!)
+                    dispatch.leave()
+                }
+                dispatch.enter()
+                DatabaseManager.shared.addToFavourite(phoneNumber: self.phoneNumber, title: tittle, pubDate: self.news.pubDate, description: self.news.description, imgLink: self.imgLink, htmlString: htmlString, link: self.news.link)
+                dispatch.leave()
+                dispatch.notify(queue: .main, execute: {
+                    self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                    NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
+                })
+            } else {
+                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                self.deleteFavourite(phoneNumber: self.phoneNumber, tittle: tittle, completion: { success in
+                    if success {
+                        self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                        NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
+                    }
+                })
             }
-            DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: htmlString, link: news.link)
-            self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-        } else {
-            DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
-            self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-        }
+        })
+
+    }
+    
+    func deleteFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            completion(true)
+        })
     }
 
 }

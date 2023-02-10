@@ -28,41 +28,48 @@ class Language: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-
-        switch language {
-        case "en":
-            english()
-        default:
-            vietnamese()
-        }
-        updateLanguage()
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.language = language
+            switch language {
+            case "en":
+                self.english()
+            default:
+                self.vietnamese()
+            }
+            self.updateLanguage()
+        })
     }
 
     @IBAction func btnEnglishClicked(_ sender: Any) {
-        switch language {
-        case "vi":
-            english()
-            DatabaseManager.shared.updateLanguage(phoneNumber: phoneNumber!, language: "en")
-            self.language = "en"
-            updateLanguage()
-            delegateLang?.updateLangugeAll()
-        default:
-            break   
-        }
+        changeLanguage()
     }
     
     @IBAction func btnVietnameseClicked(_ sender: Any) {
-        switch language {
-        case "en":
-            vietnamese()
-            DatabaseManager.shared.updateLanguage(phoneNumber: phoneNumber!, language: "vi")
-            self.language = "vi"
-            updateLanguage()
-            delegateLang?.updateLangugeAll()
+        changeLanguage()
+    }
+    
+    func changeLanguage() {
+        switch self.language {
+        case "vi":
+            english()
+            self.language = "en"
         default:
-            break
+            vietnamese()
+            self.language = "vi"
         }
+        updateLanguage()
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        DatabaseManager.shared.updateLanguage(phoneNumber: phoneNumber!, language: self.language)
+        dispatchGroup.leave()
+        dispatchGroup.notify(queue: .main, execute: {
+            self.delegateLang?.updateLangugeAll()
+        })
+        
     }
     
     func english() {

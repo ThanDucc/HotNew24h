@@ -26,7 +26,6 @@
                 <constraints>
                     <constraint firstAttribute="bottom" secondItem="g9P-YP-26w" secondAttribute="bottom" constant="15" id="1gO-fn-JSK"/>
                     <constraint firstItem="g9P-YP-26w" firstAttribute="centerX" secondItem="H2p-sc-9uM" secondAttribute="centerX" id="2rF-8I-z84"/>
-                    <constraint firstItem="g9P-YP-26w" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="FPc-dX-nnu"/>
                     <constraint firstItem="g9P-YP-26w" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="15" id="Z9z-T7-Vrm"/>
                 </constraints>
             </tableViewCellContentView>

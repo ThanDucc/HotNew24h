@@ -48,6 +48,7 @@
 "Delete account" = "Xoá tài khoản";
 "Log out" = "Đăng xuất";
 "Home" = "Trang chủ";
+"Developed by Thann" = "Phát triển bởi Thann";
 
 /*
     category
@@ -61,19 +62,22 @@
 "Technology" = "Công nghệ";
 "Business" = "Kinh doanh";
 "Entertainment" = "Giải trí";
+"Law" = "Pháp luật";
+"Tourism" = "Du lịch";
 "More" = "Xem thêm";
 
 /*
     sort category Screen
  */
 "Sort" = "Sắp xếp";
-"Done" = "Hoàn thành";
+"Done" = "Hoàn tất";
+"You must not hide all categories!" = "Bạn không được ẩn toàn bộ các mục";
 
 /*
     display screen
  */
 "Share with:" = "Chia sẻ với:";
-
+"Back" = "Quay lại";
 /*
     set up language screen
  */
@@ -93,3 +97,5 @@
 "Delete Account" = "Xoá tài khoản";
 "Delete account successfully!" = "Xoá tài khoản thành công!";
 "SMS is invalid!" = "Mã SMS không chính xác!";
+"Error to send SMS" = "Lỗi khi gửi SMS";
+"Delete account failed" = "Xoá tài khoản thất bại";

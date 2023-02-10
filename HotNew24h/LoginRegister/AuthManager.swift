@@ -16,6 +16,7 @@ class AuthManager {
     private let auth = Auth.auth()
     private var verificationId: String?
 
+    // verify phone number and send sms code
     public func startAuth(phoneNumber: String, completion: @escaping (Bool) -> Void) {
         PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil, completion: { verificationId, error in
             guard let verificationId = verificationId, error == nil else {
@@ -27,6 +28,7 @@ class AuthManager {
         })
     }
     
+    // check sms code and sign in with phone number
     public func verifyCode(smsCode: String, completion: @escaping (Bool) -> Void) {
         guard let verificationId = verificationId else {
             completion(false)
@@ -44,7 +46,8 @@ class AuthManager {
 
     }
     
-    public func deleteAccount(smsCode: String, completion: @escaping (Bool) -> Void) {
+    // reauthentication by send sms code and delete account with phone number
+    public func deleteAccountByPhoneNumber(smsCode: String, completion: @escaping (Bool) -> Void) {
         guard let verificationId = verificationId else {
             completion(false)
             return
@@ -72,6 +75,29 @@ class AuthManager {
         
     }
     
+    public func deleteAccountByEmail(completion: @escaping (Bool) -> Void) {
+        let user: User = Auth.auth().currentUser!
+        let credential = EmailAuthProvider.credential(withEmail: (user.email)!, password: "123456")
+        user.reauthenticate(with: credential) { result, error in
+            if let error = error {
+                print(error.localizedDescription)
+                completion(false)
+            } else {
+                user.delete(completion: { error in
+                    if let error = error {
+                        print(error.localizedDescription)
+                        completion(false)
+                    } else {
+                        Foundation.UserDefaults.standard.removeObject(forKey: "LOG_IN")
+                        completion(true)
+                    }
+                })
+            }
+        }
+    }
+    
+    
+    // log out account in Firebase
     public func logOut() {
         do {
             LoginManager().logOut()
