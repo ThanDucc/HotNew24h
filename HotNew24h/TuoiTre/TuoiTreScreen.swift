@@ -242,6 +242,8 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         let displayNewsScreen = self.storyboard?.instantiateViewController(withIdentifier: "displaySC") as! DisplayNewsScreen
         displayNewsScreen.news = list[indexPath.row]
         
+        //test git
+        
         if !list[indexPath.row].imgLink.isEmpty {
             let dispatchGroup = DispatchGroup()
             dispatchGroup.enter()
