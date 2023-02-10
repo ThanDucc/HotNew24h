@@ -1,0 +1,133 @@
+{
+  "data": {
+    "news": [
+      {
+        "id": 1,
+        "name": "Youth",
+        "link": "https://tuoitre.vn/rss/",
+        "endpoint": ".rss",
+        "category": [
+          {
+            "id": 1,
+            "name": "Home",
+            "path": "tin-moi-nhat"
+          },
+          {
+            "id": 2,
+            "name": "World",
+            "path": "the-gioi"
+          },
+          {
+            "id": 3,
+            "name": "News",
+            "path": "thoi-su"
+          },
+          {
+            "id": 4,
+            "name": "Education",
+            "path": "giao-duc"
+          },
+          {
+            "id": 5,
+            "name": "Sports",
+            "path": "the-thao"
+          },
+          {
+            "id": 6,
+            "name": "Health",
+            "path": "suc-khoe"
+          },
+          {
+            "id": 7,
+            "name": "Science",
+            "path": "khoa-hoc"
+          },
+          {
+            "id": 8,
+            "name": "Technology",
+            "path": "nhip-song-so"
+          },
+          {
+            "id": 9,
+            "name": "Business",
+            "path": "kinh-doanh"
+          },
+          {
+            "id": 10,
+            "name": "Entertainment",
+            "path": "giai-tri"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "VNExpress",
+        "link": "https://vnexpress.net/rss/",
+        "endpoint": ".rss",
+        "category": [
+          {
+            "id": 1,
+            "name": "Home",
+            "path": "tin-moi-nhat"
+          },
+          {
+            "id": 2,
+            "name": "World",
+            "path": "the-gioi"
+          },
+          {
+            "id": 3,
+            "name": "News",
+            "path": "thoi-su"
+          },
+          {
+            "id": 4,
+            "name": "Education",
+            "path": "giao-duc"
+          },
+          {
+            "id": 5,
+            "name": "Sports",
+            "path": "the-thao"
+          },
+          {
+            "id": 6,
+            "name": "Health",
+            "path": "suc-khoe"
+          },
+          {
+            "id": 7,
+            "name": "Science",
+            "path": "khoa-hoc"
+          },
+          {
+            "id": 8,
+            "name": "Technology",
+            "path": "nhip-song-so"
+          },
+          {
+            "id": 9,
+            "name": "Business",
+            "path": "kinh-doanh"
+          },
+          {
+            "id": 10,
+            "name": "Entertainment",
+            "path": "giai-tri"
+          },
+          {
+            "id": 11,
+            "name": "Law",
+            "path": "phap-luat"
+          },
+          {
+            "id": 12,
+            "name": "Tourism",
+            "path": "du-lich"
+          }
+        ]
+      }
+    ],
+    "code": 200
+  }
+}

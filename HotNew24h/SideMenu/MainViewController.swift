@@ -21,11 +21,25 @@ class MainViewController: UIViewController {
     private var revealSideMenuOnTop: Bool = true
     
     var gestureEnabled: Bool = true
+    
+    var sideMenuList: [String] = []
     public static var type: String = ""
     public static var nameSideMenu = "Youth"
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let parseJson = ParseJson()
+        parseJson.getData()
+
+        let newsData = parseJson.newsData
+        for i in 0..<(newsData?.data.news.count)! {
+            sideMenuList.append((newsData?.data.news[i].name)!)
+        }
+        
+        sideMenuList = sideMenuList + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
+        
+        MainViewController.nameSideMenu = (newsData?.data.news[0].name)!
     
         // Shadow Background View
         self.sideMenuShadowView = UIView(frame: self.view.bounds)
@@ -44,7 +58,7 @@ class MainViewController: UIViewController {
         let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
         self.sideMenuViewController = storyboard.instantiateViewController(withIdentifier: "MenuController") as? SideMenu
         self.sideMenuViewController.delegateMenuItem = self
-        self.sideMenuViewController.list = ["Youth", "VNExpress", "Favourite", "Seen", "Settings", "About App", "Contact us"]
+        self.sideMenuViewController.list = sideMenuList
         view.insertSubview(self.sideMenuViewController!.view, at: self.revealSideMenuOnTop ? 2 : 0)
         addChild(self.sideMenuViewController!)
         self.sideMenuViewController!.didMove(toParent: self)
@@ -74,7 +88,6 @@ class MainViewController: UIViewController {
             self.sideMenuViewController.view.isHidden = false
         }
 
-        MainViewController.nameSideMenu = "Youth"
     }
 
     func setNavBarAppearance(tintColor: UIColor, barColor: UIColor) {
@@ -157,11 +170,11 @@ extension MainViewController: MenuDelegate {
         if bool {
             switch item {
             case "Youth":
-                MainViewController.type = "youth"
+                MainViewController.type = "Youth"
                 self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
                 close(bool: false)
             case "VNExpress":
-                MainViewController.type = "vnexpress"
+                MainViewController.type = "VNExpress"
                 self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
                 close(bool: false)
             case "Favourite":
@@ -186,7 +199,6 @@ extension MainViewController: MenuDelegate {
                 viewControllerToPresent.delegateDelete = self
                 if let sheet = viewControllerToPresent.sheetPresentationController {
                     sheet.detents = [.medium()]
-//                    sheet.preferredCornerRadius = 30.0
                 }
                 present(viewControllerToPresent, animated: true, completion: nil)
             case "Log out":
@@ -207,7 +219,7 @@ extension MainViewController: MenuDelegate {
         DispatchQueue.main.async {
             self.sideMenuState(expanded: bool)
         }
-        self.sideMenuViewController.list = ["Youth", "VNExpress", "Favourite", "Seen", "Settings", "About App", "Contact us"]
+        self.sideMenuViewController.list = sideMenuList
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
             self.sideMenuViewController.tbListOption.reloadData()
         })

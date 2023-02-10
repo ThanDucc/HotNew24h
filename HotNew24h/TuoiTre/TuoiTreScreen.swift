@@ -16,9 +16,9 @@ protocol CategoryDelegate: AnyObject {
 class TuoiTreScreen: UIViewController {
     var listTittle:[String] = []
     var listURL:[String] = []
-    var type: String = "youth"
-    let YOUTH = "youth"
-    let VNEXPRESS = "vnexpress"
+    var type: String = "Youth"
+    let YOUTH = "Youth"
+    let VNEXPRESS = "VNExpress"
     
     var list: [News] = []
     var language = ""
@@ -115,7 +115,7 @@ class TuoiTreScreen: UIViewController {
         listURL = []
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
-        let category: [Category] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
+        let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
         dispatchGroup.leave()
         dispatchGroup.notify(queue: .main, execute: { [self] in
             for i in 0..<category.count {
@@ -142,7 +142,7 @@ class TuoiTreScreen: UIViewController {
         
         DispatchQueue.global().async {
             switch self.type {
-            case "youth":
+            case "Youth":
                 let xml = ParseXML()
                 xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
                     if success {

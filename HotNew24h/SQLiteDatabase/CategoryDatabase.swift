@@ -1,13 +1,13 @@
 //
-//  Category.swift
+//  CategoryDatabase.swift
 //  HotNew24h
 //
-//  Created by ThanDuc on 04/02/2023.
+//  Created by ThanDuc on 10/02/2023.
 //
 
 import Foundation
 
-class Category {
+class CategoryDatabase {
     internal init(phoneNumber: String, name: String, isHidden: String, position: Int, linkCategory: String, type: String) {
         self.phoneNumber = phoneNumber
         self.name = name

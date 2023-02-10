@@ -55,7 +55,7 @@ class SortCategoryTuoiTre: UIViewController {
     func getListCategory() {
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
-        let category: [Category] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
+        let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
         dispatchGroup.leave()
         dispatchGroup.notify(queue: .main, execute: { [self] in
             for i in 0..<category.count {

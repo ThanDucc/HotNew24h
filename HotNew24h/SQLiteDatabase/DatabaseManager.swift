@@ -134,36 +134,36 @@ class DatabaseManager {
     }
     
     func createCategory(phoneNumber: String) {
-        let nameYouth: [String] = ["Home", "World", "News", "Education", "Sports", "Health", "Science", "Technology", "Business", "Entertainment"]
-        let linkYouthCate: [String] = ["tin-moi-nhat", "the-gioi", "thoi-su", "giao-duc", "the-thao", "suc-khoe", "khoa-hoc", "nhip-song-so", "kinh-doanh", "giai-tri"]
-        
-        let nameVNExpress: [String] = ["Home", "World", "News", "Education", "Sports", "Health", "Science", "Technology", "Business", "Entertainment", "Law", "Tourism"]
-        let linkVNExpressCate: [String] = ["tin-moi-nhat", "the-gioi", "thoi-su", "giao-duc", "the-thao", "suc-khoe", "khoa-hoc", "so-hoa", "kinh-doanh", "giai-tri", "phap-luat", "du-lich"]
-        
         if database.open() {
             let queryInsert = "INSERT INTO " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " ," + NAME + " ," + IS_HIDDEN + " ," + POSITION + " ," + LINK_CATEGORY + " ," + TYPE + ") VALUES (?, ?, ?, ?, ?, ?)"
-            do {
-                for i in 0 ..< nameYouth.count {
-                    try database.executeUpdate(queryInsert, values: [phoneNumber, nameYouth[i], "false", i.description, "https://tuoitre.vn/rss/" + linkYouthCate[i] + ".rss", "youth"])
+
+            let parseJson = ParseJson()
+            parseJson.getData()
+
+            let newsData = parseJson.newsData
+            if newsData?.data.code == 200 {
+                let news: [Newspaper] = newsData!.data.news
+                for i in 0..<news.count {
+                    for j in 0..<news[i].category.count {
+                        try! database.executeUpdate(queryInsert, values: [phoneNumber, news[i].category[j].name, "false", j.description, news[i].link + news[i].category[j].path + news[i].endpoint, news[i].name])
+                    }
                 }
-                for i in 0 ..< nameVNExpress.count {
-                    try database.executeUpdate(queryInsert, values: [phoneNumber, nameVNExpress[i], "false", i.description, "https://vnexpress.net/rss/" + linkVNExpressCate[i] + ".rss", "vnexpress"])
-                }
-            } catch let err {
-               print("Insert failed, error: \(err.localizedDescription)")
+            } else {
+                print("Get data from API failed")
             }
         }
         database.close()
     }
+
     
-    func getListCategory(phoneNumber: String, type: String) -> [Category] {
-        var listCategory: [Category] = []
+    func getListCategory(phoneNumber: String, type: String) -> [CategoryDatabase] {
+        var listCategory: [CategoryDatabase] = []
         if database.open() {
             let querySelect = "SELECT * FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "'"
             do {
                 let result = try database.executeQuery(querySelect, values: nil)
                 while result.next() {
-                    let category = Category(phoneNumber: result.string(forColumnIndex: 0)!, name: result.string(forColumnIndex: 1)!, isHidden: result.string(forColumnIndex: 2)!, position: Int(result.int(forColumnIndex: 3)), linkCategory: result.string(forColumnIndex: 4)!, type: result.string(forColumnIndex: 5)!)
+                    let category = CategoryDatabase(phoneNumber: result.string(forColumnIndex: 0)!, name: result.string(forColumnIndex: 1)!, isHidden: result.string(forColumnIndex: 2)!, position: Int(result.int(forColumnIndex: 3)), linkCategory: result.string(forColumnIndex: 4)!, type: result.string(forColumnIndex: 5)!)
                     listCategory.append(category)
                 }
             } catch let err {
