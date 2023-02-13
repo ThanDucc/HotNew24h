@@ -27,20 +27,22 @@ class ParseXML: NSObject, XMLParserDelegate {
     func getEpisode(urlString: String, completion: @escaping (Bool) -> Void) {
         self.listNews = []
         if let url = URL(string: urlString) {
-            URLSession.shared.dataTask(with: url) { (data, response, error) in
-                if error != nil {
-                    print(error ?? "Error getting url data")
-                    completion(false)
-                } else {
-                    if data != nil {
-                        self.xmlParser = XMLParser(data: data!)
-                        self.xmlParser.delegate = self
-                        self.xmlParser.parse()
-                        completion(true)
+            DispatchQueue.global().async {
+                URLSession.shared.dataTask(with: url) { (data, response, error) in
+                    if error != nil {
+                        print(error ?? "Error getting url data")
+                        completion(false)
+                    } else {
+                        if data != nil {
+                            self.xmlParser = XMLParser(data: data!)
+                            self.xmlParser.delegate = self
+                            self.xmlParser.parse()
+                            completion(true)
+                        }
                     }
                 }
+                .resume()
             }
-            .resume()
         }
     }
 

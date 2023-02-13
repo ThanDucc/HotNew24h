@@ -103,7 +103,7 @@
           {
             "id": 8,
             "name": "Technology",
-            "path": "nhip-song-so"
+            "path": "so-hoa"
           },
           {
             "id": 9,
