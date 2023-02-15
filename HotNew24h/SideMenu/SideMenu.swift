@@ -47,15 +47,14 @@ class SideMenu: UIViewController {
     }
     
     func getLanguage(completion: @escaping(Bool) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            completion(true)
-        })
+        DispatchQueue.global().async {
+            let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+            DispatchQueue.main.async {
+                self.language = language
+                completion(true)
+            }
+        }
     }
     
     // display username

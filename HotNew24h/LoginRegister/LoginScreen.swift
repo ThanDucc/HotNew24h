@@ -48,11 +48,8 @@ class LoginScreen: UIViewController {
         }
         
         // Create database and tables
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
         DatabaseManager.shared.createDatabase()
         DatabaseManager.shared.createTables()
-        dispatchGroup.leave()
         
         // get phone number to get languge to display UI
         let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
@@ -60,14 +57,13 @@ class LoginScreen: UIViewController {
             language = "en"
             self.setupUI()
         } else {
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                self.language = language
-                self.setupUI()
-            })
+            DispatchQueue.global().async {
+                let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+                DispatchQueue.main.async {
+                    self.language = language
+                    self.setupUI()
+                }
+            }
         }
         
         // add gesture to login with Facebook
@@ -106,18 +102,13 @@ class LoginScreen: UIViewController {
             let user = Auth.auth().currentUser
             self.defaults.set(user?.displayName, forKey: "userName")
             
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: (user?.uid)!)
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
+            DispatchQueue.global().async {
+                let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: (user?.uid)!)
                 if !check {
                     Register().registerAccount(userId: (user?.uid)!)
                 }
-            })
-            
+            }
             self.defaults.set((user?.uid)!, forKey: "userPhoneNumber")
-            
             self.login()
             
         })
@@ -148,15 +139,12 @@ class LoginScreen: UIViewController {
             }
             let email = signInResult?.user.profile?.email
             self.createUser(email: email!, completion: { success in
-                let dispatchGroup = DispatchGroup()
-                dispatchGroup.enter()
-                let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: email!)
-                dispatchGroup.leave()
-                dispatchGroup.notify(queue: .main, execute: {
+                DispatchQueue.global().async {
+                    let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: email!)
                     if !check {
                         Register().registerAccount(userId: email!)
                     }
-                })
+                }
                 self.defaults.set(email, forKey: "userPhoneNumber")
                 self.loginGoogle(email: email!)
             })

@@ -57,8 +57,10 @@ class TuoiTreScreen: UIViewController {
         })
         
         getListCategory(completion: { success in
-            self.getAndDisplayData(index: self.index, indicatorHidden: true)
-            self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
+            DispatchQueue.main.async {
+                self.getAndDisplayData(index: self.index, indicatorHidden: true)
+                self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
+            }
         })
         
         self.tbListTittle.dataSource = self
@@ -99,25 +101,22 @@ class TuoiTreScreen: UIViewController {
     
     func getLanguage(completion: @escaping(Bool) -> Void) {
         // get language
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            completion(true)
-        })
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                self.language = language
+                completion(true)
+            }
+        }
     }
     
     // get list category
     func getListCategory(completion: @escaping(Bool) -> Void) {
         listTittle = []
         listURL = []
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: { [self] in
+        
+        DispatchQueue.global().async {
+            let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: self.phoneNumber, type: self.type)
             for i in 0..<category.count {
                 if category[i].isHidden == "false" {
                     self.listTittle.append(category[i].name)
@@ -125,10 +124,12 @@ class TuoiTreScreen: UIViewController {
                 }
             }
             self.listTittle.append("More")
-            cvCategory.dataSource = self
-            cvCategory.delegate = self
-            completion(true)
-        })
+            DispatchQueue.main.async {
+                self.cvCategory.dataSource = self
+                self.cvCategory.delegate = self
+                completion(true)
+            }
+        }
     }
     
     // when user click a category, we get the index and display table with index
@@ -197,39 +198,43 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         cell.btnFavourite.isHidden = false
         
         if !list[indexPath.row].imgLink.isEmpty {
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let url: URL = URL(string: list[indexPath.row].imgLink)!
-            var data: Data?
-            do {
-                data = try Data(contentsOf: url)
-            } catch {
-                print("Error")
-            }
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                cell.indicator.stopAnimating()
-                cell.indicator.isHidden = true
-                if data != nil {
-                    cell.imgNew.image = UIImage(data: data!)
-                    cell.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+            DispatchQueue.global().async {
+                let url: URL = URL(string: self.list[indexPath.row].imgLink)!
+                var data: Data?
+                do {
+                    data = try Data(contentsOf: url)
+                } catch {
+                    print("Error load image")
                 }
-            })
+                DispatchQueue.main.async {
+                    cell.indicator.stopAnimating()
+                    cell.indicator.isHidden = true
+                    if data != nil {
+                        cell.imgNew.image = UIImage(data: data!)
+                        cell.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+                    }
+                }
+            }
         }
     
         cell.new = list[indexPath.row]
+        cell.btnFavourite.isHidden = true
+        cell.indicatorFavourite.startAnimating()
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let check: Bool = DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            if check {
-                cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-            } else {
-                cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+        let lbTittleNew = cell.lbTittleNew.text!
+        
+        DispatchQueue.global().async {
+            let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTittleNew, phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                cell.indicatorFavourite.stopAnimating()
+                cell.btnFavourite.isHidden = false
+                if check {
+                    cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                } else {
+                    cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                }
             }
-        })
+        }
         
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor.white
@@ -242,25 +247,22 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         let displayNewsScreen = self.storyboard?.instantiateViewController(withIdentifier: "displaySC") as! DisplayNewsScreen
         displayNewsScreen.news = list[indexPath.row]
         
-        //test git
-        
         if !list[indexPath.row].imgLink.isEmpty {
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let url: URL = URL(string: list[indexPath.row].imgLink)!
-            var data: Data?
-            do {
-                data = try Data(contentsOf: url)
-            } catch {
-                print("Error")
-            }
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                if data != nil {
-                    displayNewsScreen.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
-                    self.navigationController?.pushViewController(displayNewsScreen, animated: false)
+            DispatchQueue.global().async {
+                let url: URL = URL(string: self.list[indexPath.row].imgLink)!
+                var data: Data?
+                do {
+                    data = try Data(contentsOf: url)
+                } catch {
+                    print("Error load image")
                 }
-            })
+                DispatchQueue.main.async {
+                    if data != nil {
+                        displayNewsScreen.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+                        self.navigationController?.pushViewController(displayNewsScreen, animated: false)
+                    }
+                }
+            }
         }
         addSeenList(news: list[indexPath.row])
         tbListTittle.deselectRow(at: indexPath, animated: false)
@@ -279,23 +281,15 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
 
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        DispatchQueue.global().async {
+            let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: self.phoneNumber)
             if check {
-                let dispatch = DispatchGroup()
-                dispatch.enter()
                 DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
-                dispatch.leave()
-                dispatch.notify(queue: .main, execute: {
-                    DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
-                })
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
             } else {
                 DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
             }
-        })
+        }
     }
     
 }

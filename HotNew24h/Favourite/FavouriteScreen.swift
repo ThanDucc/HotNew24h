@@ -61,27 +61,25 @@ class FavouriteScreen: UIViewController {
     
     func getLanguage(completion: @escaping(Bool) -> Void) {
         // get language
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            completion(true)
-        })
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                self.language = language
+                completion(true)
+            }
+        }
     }
     
     func getFavouriteList() {
         self.page = 0
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let list = DatabaseManager.shared.getFavouriteList(phoneNumber: phoneNumber, page: page)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.list = list
-            self.count = self.list.count
-            self.tbListFavourite.reloadData()
-        })
+        DispatchQueue.global().async {
+            let list = DatabaseManager.shared.getFavouriteList(phoneNumber: self.phoneNumber, page: self.page)
+            DispatchQueue.main.async {
+                self.list = list
+                self.count = self.list.count
+                self.tbListFavourite.reloadData()
+            }
+        }
     }
     
 }
@@ -125,21 +123,25 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
                 cell.imgNew.image = UIImage(data: dataDecoded)
                 cell.indicator.stopAnimating()
                 cell.indicator.isHidden = true
+            } else {
+                cell.imgNew.image = UIImage(named: "default")
+                cell.indicator.stopAnimating()
+                cell.indicator.isHidden = true
             }
             
             cell.new = list[indexPath.row]
-            
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let check: Bool = DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber)
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                if check {
-                    cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-                } else {
-                    cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            let lbTitleNew = cell.lbTittleNew.text!
+            DispatchQueue.global().async {
+                let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTitleNew, phoneNumber: self.phoneNumber)
+                DispatchQueue.main.async {
+                    if check {
+                        cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                    } else {
+                        cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                    }
                 }
-            })
+            }
+            
             cell.screen = "Favourite"
             
             let backgroundView = UIView()
@@ -173,23 +175,15 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
     func addSeenList(news: News) {
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        DispatchQueue.global().async {
+            let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: self.phoneNumber)
             if check {
-                let dispatch = DispatchGroup()
-                dispatch.enter()
                 DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
-                dispatch.leave()
-                dispatch.notify(queue: .main, execute: {
-                    DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
-                })
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
             } else {
                 DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
             }
-        })
+        }
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {

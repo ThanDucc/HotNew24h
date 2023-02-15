@@ -35,16 +35,15 @@ class SortCategoryTuoiTre: UIViewController {
         
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
         // get language
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            self.lbTittle.text = "More".LocalizedString(str: language)
-            self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-        })
-        
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                self.language = language
+                self.lbTittle.text = "More".LocalizedString(str: language)
+                self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+            }
+        }
+
         getListCategory()
         tbListCategory.dragInteractionEnabled = true
         
@@ -53,34 +52,31 @@ class SortCategoryTuoiTre: UIViewController {
     
     // get list category
     func getListCategory() {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: phoneNumber, type: type)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: { [self] in
-            for i in 0..<category.count {
-                self.list.append(category[i].name)
-                self.listHidden.append(category[i].isHidden)
+        DispatchQueue.global().async {
+            let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: self.phoneNumber, type: self.type)
+            DispatchQueue.main.async {
+                for i in 0..<category.count {
+                    self.list.append(category[i].name)
+                    self.listHidden.append(category[i].isHidden)
+                }
+                self.tbListCategory.delegate = self
+                self.tbListCategory.dataSource = self
             }
-            tbListCategory.delegate = self
-            tbListCategory.dataSource = self
-        })
+        }
     }
     
     // back to home screen and update position of categories
     @IBAction func btnDone(_ sender: Any) {
         if listHidden.contains("false") {
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            for i in 0..<self.list.count {
-                DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, name: self.list[i], type: self.type)
-                DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+            DispatchQueue.global().async {
+                for i in 0..<self.list.count {
+                    DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+                }
+                DispatchQueue.main.async {
+                    self.delegateSortCate?.update(nameCate: self.nameCate)
+                    self.navigationController?.popViewController(animated: true)
+                }
             }
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                self.delegateSortCate?.update(nameCate: self.nameCate)
-                self.navigationController?.popViewController(animated: true)
-            })
         } else {
             let alert = UIAlertController(title: "Warning".LocalizedString(str: language), message: "You must not hide all categories!".LocalizedString(str: language), preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))

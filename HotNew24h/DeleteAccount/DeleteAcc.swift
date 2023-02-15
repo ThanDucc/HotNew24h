@@ -36,20 +36,19 @@ class DeleteAcc: UIViewController {
         
         indicator.isHidden = true
 
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
-            self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
-            self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
-            self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-            self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-            self.lbStatus.text = self.lbStatus.text?.LocalizedString(str: language)
-        })
-        
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber!)
+            DispatchQueue.main.async {
+                self.language = language
+                self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
+                self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
+                self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
+                self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+                self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+                self.lbStatus.text = self.lbStatus.text?.LocalizedString(str: language)
+            }
+        }
+
         tfSMSCode.isHidden = true
         distance.constant = 0
     }
@@ -68,22 +67,20 @@ class DeleteAcc: UIViewController {
     }
     
     func deleteAcc() {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteUserRow(phoneNumber: self.phoneNumber!)
-        dispatchGroup.leave()
-        
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteFavouriteRow(phoneNumber: self.phoneNumber!)
-        dispatchGroup.leave()
-        
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteSeenRow(phoneNumber: self.phoneNumber!)
-        dispatchGroup.leave()
-        
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteCategory(phoneNumber: self.phoneNumber!)
-        dispatchGroup.leave()
+        DispatchQueue.global().async {
+            DatabaseManager.shared.deleteUserRow(phoneNumber: self.phoneNumber!)
+            DatabaseManager.shared.deleteFavouriteRow(phoneNumber: self.phoneNumber!)
+            DatabaseManager.shared.deleteSeenRow(phoneNumber: self.phoneNumber!)
+            DatabaseManager.shared.deleteCategory(phoneNumber: self.phoneNumber!)
+            
+            DispatchQueue.main.async {
+                self.indicator.stopAnimating()
+                self.lbStatus.text = "Delete account successfully!".LocalizedString(str: self.language)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+                    self.delegateDelete?.deleteAcc(status: true)
+                }
+            }
+        }
         
         Foundation.UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
         Foundation.UserDefaults.standard.removeObject(forKey: "LOG_IN")
@@ -91,13 +88,6 @@ class DeleteAcc: UIViewController {
         LoginScreen.indexVNExCate = 0
         LoginScreen.indexYouthCate = 0
         MainViewController.type = ""
-        
-        indicator.stopAnimating()
-
-        self.lbStatus.text = "Delete account successfully!".LocalizedString(str: self.language)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
-            self.delegateDelete?.deleteAcc(status: true)
-        }
     }
     
     func deleteAccByPhoneNumber() {

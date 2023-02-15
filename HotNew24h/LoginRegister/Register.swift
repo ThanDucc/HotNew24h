@@ -10,11 +10,13 @@ import Foundation
 class Register {
     
     func registerAccount(userId: String) {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.insertAnUser(phoneNumber: userId, language: "en")
-        DatabaseManager.shared.createCategory(phoneNumber: userId)
-        dispatchGroup.leave()
+        DispatchQueue.global().async {
+            DatabaseManager.shared.insertAnUser(phoneNumber: userId, language: "en")
+        }
+        
+        DispatchQueue.global().async {
+            DatabaseManager.shared.createCategory(phoneNumber: userId)
+        }
     }
     
 }

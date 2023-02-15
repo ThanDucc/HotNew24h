@@ -46,38 +46,36 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
         
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            self.btnBack.setTitle(self.btnBack.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-            self.lbShare.text = self.lbShare.text?.LocalizedString(str: language)
-        })
-       
-        dispatchGroup.enter()
-        let check: Bool = DatabaseManager.shared.checkFavourite(tittle: news.title, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            if check {
-                self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-            } else {
-                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                self.language = language
+                self.btnBack.setTitle(self.btnBack.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+                self.lbShare.text = self.lbShare.text?.LocalizedString(str: language)
             }
-        })
+        }
+       
+        DispatchQueue.global().async {
+            let check: Bool = DatabaseManager.shared.checkFavourite(tittle: self.news.title, phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                if check {
+                    self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                } else {
+                    self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                }
+            }
+        }
         
         webView.navigationDelegate = self
-        dispatchGroup.enter()
-        let urlRequest = URL(string: news.link)!
-        let request = URLRequest(url: urlRequest)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.webView.load(request)
-        })
-        
-        indicator.stopAnimating()
-        indicator.isHidden = true
+        DispatchQueue.global().async {
+            let urlRequest = URL(string: self.news.link)!
+            let request = URLRequest(url: urlRequest)
+            DispatchQueue.main.async {
+                self.webView.load(request)
+                self.indicator.stopAnimating()
+                self.indicator.isHidden = true
+            }
+        }
         
         imgShare.isUserInteractionEnabled = true
         
@@ -110,47 +108,41 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     @IBAction func btnFavouriteClick(_ sender: Any) {
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let check = DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: { [self] in
+        DispatchQueue.global().async {
+            let check = DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: self.phoneNumber)
             if !check {
                 var htmlString = self.news.htmlString
-                let dispatch = DispatchGroup()
                 if htmlString.isEmpty {
-                    dispatch.enter()
                     htmlString = try! String(contentsOf: URL(string: self.news.link)!)
-                    dispatch.leave()
                 }
-                dispatch.enter()
                 DatabaseManager.shared.addToFavourite(phoneNumber: self.phoneNumber, title: tittle, pubDate: self.news.pubDate, description: self.news.description, imgLink: self.imgLink, htmlString: htmlString, link: self.news.link)
-                dispatch.leave()
-                dispatch.notify(queue: .main, execute: {
+
+                DispatchQueue.main.async {
                     self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
                     NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
-                })
+                }
             } else {
-                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                self.deleteFavourite(phoneNumber: self.phoneNumber, tittle: tittle, completion: { success in
-                    if success {
-                        self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                        NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
-                    }
-                })
+                DispatchQueue.main.async {
+                    self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                    self.deleteFavourite(phoneNumber: self.phoneNumber, tittle: tittle, completion: { success in
+                        if success {
+                            DispatchQueue.main.async {
+                                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                                NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
+                            }
+                        }
+                    })
+                }
             }
-        })
+        }
 
     }
     
     func deleteFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        DispatchQueue.global().async {
+            DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
             completion(true)
-        })
+        }
     }
 
 }

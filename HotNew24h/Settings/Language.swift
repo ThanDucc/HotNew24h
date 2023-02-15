@@ -28,20 +28,19 @@ class Language: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            switch language {
-            case "en":
-                self.english()
-            default:
-                self.vietnamese()
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber!)
+            DispatchQueue.main.async {
+                self.language = language
+                switch language {
+                case "en":
+                    self.english()
+                default:
+                    self.vietnamese()
+                }
+                self.updateLanguage()
             }
-            self.updateLanguage()
-        })
+        }
     }
 
     @IBAction func btnEnglishClicked(_ sender: Any) {
@@ -62,14 +61,12 @@ class Language: UIViewController {
             self.language = "vi"
         }
         updateLanguage()
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.updateLanguage(phoneNumber: phoneNumber!, language: self.language)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.delegateLang?.updateLangugeAll()
-        })
-        
+        DispatchQueue.global().async {
+            DatabaseManager.shared.updateLanguage(phoneNumber: self.phoneNumber!, language: self.language)
+            DispatchQueue.main.async {
+                self.delegateLang?.updateLangugeAll()
+            }
+        }
     }
     
     func english() {

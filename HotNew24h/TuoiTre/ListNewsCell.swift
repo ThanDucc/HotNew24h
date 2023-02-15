@@ -48,34 +48,38 @@ class ListNewsCell: UITableViewCell {
             indicatorFavourite.startAnimating()
         }
         
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let check = DatabaseManager.shared.checkFavourite(tittle: self.lbTittleNew.text!, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        let tittleNew = self.lbTittleNew.text!
+        DispatchQueue.global().async {
+            let check = DatabaseManager.shared.checkFavourite(tittle: tittleNew, phoneNumber: phoneNumber)
             if !check {
                 self.addToFavourite(phoneNumber: phoneNumber, tittle: tittle!, completion: { success in
                     if success {
-                        self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-                        self.indicatorFavourite.stopAnimating()
-                        self.btnFavourite.isHidden = false
+                        DispatchQueue.main.async {
+                            self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                            self.indicatorFavourite.stopAnimating()
+                            self.btnFavourite.isHidden = false
+                        }
                     }
                 })
             } else {
-                let tittle = self.lbTittleNew.text?.replacingOccurrences(of: "'", with: "\\\\")
+                let tittle = self.new.title.replacingOccurrences(of: "'", with: "\\\\")
                 if self.screen == "Favourite" {
-                    self.delegate?.deleteFavourite(tittle: tittle!)
+                    DispatchQueue.main.async {
+                        self.delegate?.deleteFavourite(tittle: tittle)
+                    }
                 } else {
-                    self.deleteFavourite(phoneNumber: phoneNumber, tittle: tittle!, completion: { success in
+                    self.deleteFavourite(phoneNumber: phoneNumber, tittle: tittle, completion: { success in
                         if success {
-                            self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                            self.indicatorFavourite.stopAnimating()
-                            self.btnFavourite.isHidden = false
+                            DispatchQueue.main.async {
+                                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                                self.indicatorFavourite.stopAnimating()
+                                self.btnFavourite.isHidden = false
+                            }
                         }
                     })
                 }
             }
-        })
+        }
     }
     
     func addToFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {
@@ -83,23 +87,17 @@ class ListNewsCell: UITableViewCell {
         if htmlString.isEmpty {
             htmlString = try! String(contentsOf: URL(string: new.link)!)
         }
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: self.lbDateTime.text!, description: self.lbDesNew.text!, imgLink: self.imgLink, htmlString: htmlString, link: self.new.link)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        DispatchQueue.global().async {
+            DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: self.new.pubDate, description: self.new.description, imgLink: self.imgLink, htmlString: htmlString, link: self.new.link)
             completion(true)
-        })
+        }
     }
     
     func deleteFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
+        DispatchQueue.global().async {
+            DatabaseManager.shared.deleteFavouriteRow(tittle: tittle, phoneNumber: phoneNumber)
             completion(true)
-        })
+        }
     }
     
 }

@@ -19,7 +19,7 @@ class ParseJson {
             let newsData = try? JSONDecoder().decode(NewsData.self, from: data)
             self.newsData = newsData
         } catch {
-            print("Error")
+            print("Error Parse JSON")
         }
     }
 }

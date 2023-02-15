@@ -32,14 +32,13 @@ class RegisterScreen: UIViewController {
             language = "en"
             self.setupUI()
         } else {
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                self.language = language
-                self.setupUI()
-            })
+            DispatchQueue.global().async {
+                let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
+                DispatchQueue.main.async {
+                    self.language = language
+                    self.setupUI()
+                }
+            }
         }
     }
     

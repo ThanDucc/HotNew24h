@@ -62,27 +62,25 @@ class SeenScreen: UIViewController {
     
     func getLanguage(completion: @escaping(Bool) -> Void) {
         // get language
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.language = language
-            completion(true)
-        })
+        DispatchQueue.global().async {
+            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
+            DispatchQueue.main.async {
+                self.language = language
+                completion(true)
+            }
+        }
     }
     
     func getSeenList() {
         self.page = 0
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        let list = DatabaseManager.shared.getSeenList(phoneNumber: phoneNumber, page: page)
-        dispatchGroup.leave()
-        dispatchGroup.notify(queue: .main, execute: {
-            self.list = list
-            self.count = self.list.count
-            self.tbSeenList.reloadData()
-        })
+        DispatchQueue.global().async {
+            let list = DatabaseManager.shared.getSeenList(phoneNumber: self.phoneNumber, page: self.page)
+            DispatchQueue.main.async {
+                self.list = list
+                self.count = self.list.count
+                self.tbSeenList.reloadData()
+            }
+        }
     }
 }
 
@@ -124,22 +122,26 @@ extension SeenScreen: UITableViewDelegate, UITableViewDataSource {
                 cell.imgNew.image = UIImage(data: dataDecoded)
                 cell.indicator.stopAnimating()
                 cell.indicator.isHidden = true
+            } else {
+                cell.imgNew.image = UIImage(named: "default")
+                cell.indicator.stopAnimating()
+                cell.indicator.isHidden = true
             }
             
             cell.imgLink = list[indexPath.row].imgLink
             cell.new = list[indexPath.row]
             
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-            let check: Bool = DatabaseManager.shared.checkFavourite(tittle: cell.lbTittleNew.text!, phoneNumber: phoneNumber)
-            dispatchGroup.leave()
-            dispatchGroup.notify(queue: .main, execute: {
-                if check {
-                    cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-                } else {
-                    cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            let lbTitleNew = cell.lbTittleNew.text!
+            DispatchQueue.global().async {
+                let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTitleNew, phoneNumber: self.phoneNumber)
+                DispatchQueue.main.async {
+                    if check {
+                        cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+                    } else {
+                        cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                    }
                 }
-            })
+            }
             
             let backgroundView = UIView()
             backgroundView.backgroundColor = UIColor.white

@@ -12,6 +12,11 @@ class DatabaseManager {
     public static let shared = DatabaseManager()
     var database: FMDatabase!
     
+    var usersQueue: FMDatabaseQueue!
+    var categoryQueue: FMDatabaseQueue!
+    var favouriteQueue: FMDatabaseQueue!
+    var seenQueue: FMDatabaseQueue!
+    
     let DATABASE_NAME = "USERS_DATA"
     
     let USERS_TABLE = "users"
@@ -35,6 +40,13 @@ class DatabaseManager {
     let POSITION = "position"
     let LINK_CATEGORY = "link_category"
     let TYPE = "type"
+    
+    init() {
+        usersQueue = FMDatabaseQueue(path: getDatabasePath())
+        categoryQueue = FMDatabaseQueue(path: getDatabasePath())
+        favouriteQueue = FMDatabaseQueue(path: getDatabasePath())
+        seenQueue = FMDatabaseQueue(path: getDatabasePath())
+    }
     
     // create path to save database
     func getDatabasePath() -> String {
@@ -75,47 +87,52 @@ class DatabaseManager {
                 try database.executeUpdate(queryFavouriteTable, values: nil)
                 try database.executeUpdate(querySeenTable, values: nil)
                 try database.executeUpdate(queryCategoryTable, values: nil)
-
             } catch let err {
                 print("Execute query failed. error: \(err.localizedDescription)")
             }
         }
-        database.close()
     }
     
     func fetchUserData() -> [Users] {
         var listUsers: [Users] = []
 
         if database.open() {
-            let querySelect = "SELECT * FROM " + USERS_TABLE
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!,language: result.string(forColumnIndex: 2)!)
-                    listUsers.append(user)
+            usersQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT * FROM " + USERS_TABLE
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!,language: result.string(forColumnIndex: 2)!)
+                        listUsers.append(user)
+                    }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
-        database.close()
 
         return listUsers
     }
     
     func checkPhoneNumber(phoneNumber: String) -> Bool {
         if database.open() {
-            let querySelect = "SELECT COUNT(*) FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    if result.int(forColumnIndex: 0) != 0 {
-                        return true
+            var check = false
+            usersQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT COUNT(*) FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        if result.int(forColumnIndex: 0) != 0 {
+                            check = true
+                        }
                     }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
+            return check
         }
         database.close()
         return false
@@ -123,11 +140,67 @@ class DatabaseManager {
     
     func insertAnUser(phoneNumber: String, language: String) {
         if database.open() {
-            let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + " ," + LANGUAGE + ") VALUES (?, ?)"
-            do {
-               try database.executeUpdate(queryInsert, values: [phoneNumber, language])
-            } catch let err {
-               print("Insert failed, error: \(err.localizedDescription)")
+            usersQueue.inTransaction { db, rollback in
+                let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + " ," + LANGUAGE + ") VALUES (?, ?)"
+                do {
+                    try db.executeUpdate(queryInsert, values: [phoneNumber, language])
+                    db.commit()
+                } catch let err {
+                    print("Insert failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
+            }
+        }
+        database.close()
+    }
+    
+    func getLanguage(phoneNumber: String) -> String {
+        var language = ""
+        if database.open() {
+            usersQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        let lang = result.string(forColumnIndex: 2)!
+                        language = lang
+                    }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
+            }
+        }
+        database.close()
+        
+        return language
+    }
+    
+    func deleteUserRow(phoneNumber: String) {
+        if database.open() {
+            usersQueue.inTransaction { db, rollback in
+                let queryDelete = "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
+            }
+        }
+        database.close()
+    }
+    
+    func updateLanguage(phoneNumber: String, language: String) {
+        if database.open() {
+            usersQueue.inTransaction { db, rollback in
+                let queryDelete = "UPDATE " + USERS_TABLE + " SET " + LANGUAGE + " = '" + language + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Update failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -135,21 +208,24 @@ class DatabaseManager {
     
     func createCategory(phoneNumber: String) {
         if database.open() {
-            let queryInsert = "INSERT INTO " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " ," + NAME + " ," + IS_HIDDEN + " ," + POSITION + " ," + LINK_CATEGORY + " ," + TYPE + ") VALUES (?, ?, ?, ?, ?, ?)"
+            categoryQueue.inTransaction { db, rollback in
+                let queryInsert = "INSERT INTO " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " ," + NAME + " ," + IS_HIDDEN + " ," + POSITION + " ," + LINK_CATEGORY + " ," + TYPE + ") VALUES (?, ?, ?, ?, ?, ?)"
 
-            let parseJson = ParseJson()
-            parseJson.getData()
+                let parseJson = ParseJson()
+                parseJson.getData()
 
-            let newsData = parseJson.newsData
-            if newsData?.data.code == 200 {
-                let news: [Newspaper] = newsData!.data.news
-                for i in 0..<news.count {
-                    for j in 0..<news[i].category.count {
-                        try! database.executeUpdate(queryInsert, values: [phoneNumber, news[i].category[j].name, "false", j.description, news[i].link + news[i].category[j].path + news[i].endpoint, news[i].name])
+                let newsData = parseJson.newsData
+                if newsData?.data.code == 200 {
+                    let news: [Newspaper] = newsData!.data.news
+                    for i in 0..<news.count {
+                        for j in 0..<news[i].category.count {
+                            try! db.executeUpdate(queryInsert, values: [phoneNumber, news[i].category[j].name, "false", j.description, news[i].link + news[i].category[j].path + news[i].endpoint, news[i].name])
+                        }
                     }
+                } else {
+                    print("Get data from API failed")
+                    rollback.pointee = true
                 }
-            } else {
-                print("Get data from API failed")
             }
         }
         database.close()
@@ -159,15 +235,18 @@ class DatabaseManager {
     func getListCategory(phoneNumber: String, type: String) -> [CategoryDatabase] {
         var listCategory: [CategoryDatabase] = []
         if database.open() {
-            let querySelect = "SELECT * FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "'"
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let category = CategoryDatabase(phoneNumber: result.string(forColumnIndex: 0)!, name: result.string(forColumnIndex: 1)!, isHidden: result.string(forColumnIndex: 2)!, position: Int(result.int(forColumnIndex: 3)), linkCategory: result.string(forColumnIndex: 4)!, type: result.string(forColumnIndex: 5)!)
-                    listCategory.append(category)
+            categoryQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT * FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "'"
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        let category = CategoryDatabase(phoneNumber: result.string(forColumnIndex: 0)!, name: result.string(forColumnIndex: 1)!, isHidden: result.string(forColumnIndex: 2)!, position: Int(result.int(forColumnIndex: 3)), linkCategory: result.string(forColumnIndex: 4)!, type: result.string(forColumnIndex: 5)!)
+                        listCategory.append(category)
+                    }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
@@ -176,25 +255,16 @@ class DatabaseManager {
         return listCategory
     }
     
-    func updateCategory(phoneNumber: String, position: Int, name: String, type: String) {
+    func updateCategory(phoneNumber: String, position: Int, isHidden: String, name: String, type: String) {
         if database.open() {
-            let queryDelete = "UPDATE " + CATEGORY_TABLE + " SET " + POSITION + " = '" + String(position) + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "' AND " + NAME + " = '" + name + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Update failed, error: \(err.localizedDescription)")
-            }
-        }
-        database.close()
-    }
-    
-    func updateCategory(phoneNumber: String, isHidden: String, name: String, type: String) {
-        if database.open() {
-            let queryDelete = "UPDATE " + CATEGORY_TABLE + " SET " + IS_HIDDEN + " = '" + isHidden + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "' AND " + NAME + " = '" + name + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Update failed, error: \(err.localizedDescription)")
+            categoryQueue.inTransaction { db, rollback in
+                let queryDelete = "UPDATE " + CATEGORY_TABLE + " SET " + POSITION + " = '" + String(position) + "', " + IS_HIDDEN + " = '" + isHidden + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "' AND " + TYPE + " = '" + type + "' AND " + NAME + " = '" + name + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Update positon failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -202,66 +272,29 @@ class DatabaseManager {
     
     func deleteCategory(phoneNumber: String) {
         if database.open() {
-            let queryDelete = "DELETE FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
-            }
-        }
-        database.close()
-    }
-    
-    func getLanguage(phoneNumber: String) -> String {
-        if database.open() {
-            let querySelect = "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let language = result.string(forColumnIndex: 2)!
-                    return language
+            categoryQueue.inTransaction { db, rollback in
+                let queryDelete = "DELETE FROM " + CATEGORY_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
-            }
-        }
-        database.close()
-        
-        return ""
-    }
-    
-    func deleteUserRow(phoneNumber: String) {
-        if database.open() {
-            let queryDelete = "DELETE FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
     }
-    
-    func updateLanguage(phoneNumber: String, language: String) {
-        if database.open() {
-            let queryDelete = "UPDATE " + USERS_TABLE + " SET " + LANGUAGE + " = '" + language + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-               try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Update failed, error: \(err.localizedDescription)")
-            }
-        }
-        database.close()
-    }
-    
     
     func addToFavourite(phoneNumber: String, title: String, pubDate: String, description: String, imgLink: String, htmlString: String, link: String) {
         if database.open() {
-            let queryInsert = "INSERT INTO " + FAVOURITE_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + ") VALUES (?, ?, ?, ?, ?, ?, ?)"
-            do {
-                try database.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link])
-            } catch let err {
-               print("Insert failed, error: \(err.localizedDescription)")
+            favouriteQueue.inTransaction { db, rollback in
+                let queryInsert = "INSERT INTO " + FAVOURITE_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + ") VALUES (?, ?, ?, ?, ?, ?, ?)"
+                do {
+                    try db.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link])
+                } catch let err {
+                    print("Insert failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -270,15 +303,18 @@ class DatabaseManager {
     func getFavouriteList(phoneNumber: String, page: Int) -> [News] {
         var listNews: [News] = []
         if database.open() {
-            let querySelect = "SELECT * FROM " + FAVOURITE_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + " LIMIT " + String(page) + ", 10"
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let news = News(title: result.string(forColumnIndex: 1)!, pubDate: result.string(forColumnIndex: 2)!, link: result.string(forColumnIndex: 6)!, description: result.string(forColumnIndex: 3)!, imgLink: result.string(forColumnIndex: 4)!, htmlString: result.string(forColumnIndex: 5)!)
-                    listNews.append(news)
+            favouriteQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT * FROM " + FAVOURITE_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + " LIMIT " + String(page) + ", 10"
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        let news = News(title: result.string(forColumnIndex: 1)!, pubDate: result.string(forColumnIndex: 2)!, link: result.string(forColumnIndex: 6)!, description: result.string(forColumnIndex: 3)!, imgLink: result.string(forColumnIndex: 4)!, htmlString: result.string(forColumnIndex: 5)!)
+                        listNews.append(news)
+                    }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
@@ -286,32 +322,39 @@ class DatabaseManager {
     }
     
     func checkFavourite(tittle: String, phoneNumber: String) -> Bool {
+        var check = false
         if database.open() {
-            let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
-            let queryCheck = "SELECT COUNT(*) FROM " + FAVOURITE_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                let result = try database.executeQuery(queryCheck, values: nil)
-                while result.next() {
-                    if result.int(forColumnIndex: 0) != 0 {
-                        return true
+            favouriteQueue.inTransaction { db, rollback in
+                let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
+                let queryCheck = "SELECT COUNT(*) FROM " + FAVOURITE_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    let result = try db.executeQuery(queryCheck, values: nil)
+                    while result.next() {
+                        if result.int(forColumnIndex: 0) != 0 {
+                            check = true
+                        }
                     }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
-        return false
+        return check
     }
     
     func deleteFavouriteRow(tittle: String, phoneNumber: String) {
         if database.open() {
-            let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
-            let queryDelete = "DELETE FROM " + FAVOURITE_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
+            favouriteQueue.inTransaction { db, rollback in
+                let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
+                let queryDelete = "DELETE FROM " + FAVOURITE_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -319,11 +362,14 @@ class DatabaseManager {
     
     func deleteFavouriteRow(phoneNumber: String) {
         if database.open() {
-            let queryDelete = "DELETE FROM " + FAVOURITE_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
+            favouriteQueue.inTransaction { db, rollback in
+                let queryDelete = "DELETE FROM " + FAVOURITE_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -331,11 +377,14 @@ class DatabaseManager {
     
     func addToSeen(phoneNumber: String, title: String, pubDate: String, description: String, imgLink: String, htmlString: String, link: String) {
         if database.open() {
-            let queryInsert = "INSERT INTO " + SEEN_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + ") VALUES (?, ?, ?, ?, ?, ?, ?)"
-            do {
-                try database.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link])
-            } catch let err {
-               print("Insert failed, error: \(err.localizedDescription)")
+            seenQueue.inTransaction { db, rollback in
+                let queryInsert = "INSERT INTO " + SEEN_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + ") VALUES (?, ?, ?, ?, ?, ?, ?)"
+                do {
+                    try db.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link])
+                } catch let err {
+                    print("Insert failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -344,15 +393,18 @@ class DatabaseManager {
     func getSeenList(phoneNumber: String, page: Int) -> [News] {
         var listNews: [News] = []
         if database.open() {
-            let querySelect = "SELECT * FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + "ORDER BY " + ID + " DESC" + " LIMIT " + String(page) + ", 10"
-            do {
-                let result = try database.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let news = News(title: result.string(forColumnIndex: 1)!, pubDate: result.string(forColumnIndex: 2)!, link: result.string(forColumnIndex: 6)!, description: result.string(forColumnIndex: 3)!, imgLink: result.string(forColumnIndex: 4)!, htmlString: result.string(forColumnIndex: 5)!)
-                    listNews.append(news)
+            seenQueue.inTransaction { db, rollback in
+                let querySelect = "SELECT * FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + "ORDER BY " + ID + " DESC" + " LIMIT " + String(page) + ", 10"
+                do {
+                    let result = try db.executeQuery(querySelect, values: nil)
+                    while result.next() {
+                        let news = News(title: result.string(forColumnIndex: 1)!, pubDate: result.string(forColumnIndex: 2)!, link: result.string(forColumnIndex: 6)!, description: result.string(forColumnIndex: 3)!, imgLink: result.string(forColumnIndex: 4)!, htmlString: result.string(forColumnIndex: 5)!)
+                        listNews.append(news)
+                    }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
@@ -360,32 +412,39 @@ class DatabaseManager {
     }
     
     func checkSeen(tittle: String, phoneNumber: String) -> Bool {
+        var check = false
         if database.open() {
-            let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
-            let queryCheck = "SELECT COUNT(*) FROM " + SEEN_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                let result = try database.executeQuery(queryCheck, values: nil)
-                while result.next() {
-                    if result.int(forColumnIndex: 0) != 0 {
-                        return true
+            seenQueue.inTransaction { db, rollback in
+                let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
+                let queryCheck = "SELECT COUNT(*) FROM " + SEEN_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    let result = try db.executeQuery(queryCheck, values: nil)
+                    while result.next() {
+                        if result.int(forColumnIndex: 0) != 0 {
+                            check = true
+                        }
                     }
+                } catch let err {
+                    print("Fetch failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
                 }
-            } catch let err {
-               print("Fetch failed, error: \(err.localizedDescription)")
             }
         }
         database.close()
-        return false
+        return check
     }
     
     func deleteSeenRow(tittle: String, phoneNumber: String) {
         if database.open() {
-            let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
-            let queryDelete = "DELETE FROM " + SEEN_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
+            seenQueue.inTransaction { db, rollback in
+                let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
+                let queryDelete = "DELETE FROM " + SEEN_TABLE + " WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
@@ -393,11 +452,14 @@ class DatabaseManager {
     
     func deleteSeenRow(phoneNumber: String) {
         if database.open() {
-            let queryDelete = "DELETE FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                try database.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-               print("Delete failed, error: \(err.localizedDescription)")
+            seenQueue.inTransaction { db, rollback in
+                let queryDelete = "DELETE FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+                do {
+                    try db.executeUpdate(queryDelete, values: nil)
+                } catch let err {
+                    print("Delete failed, error: \(err.localizedDescription)")
+                    rollback.pointee = true
+                }
             }
         }
         database.close()
