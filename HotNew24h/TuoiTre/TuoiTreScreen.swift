@@ -46,6 +46,12 @@ class TuoiTreScreen: UIViewController {
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
         getLanguage(completion: { success in
             if success {
+                self.getListCategory(completion: { success in
+                    DispatchQueue.main.async {
+                        self.getAndDisplayData(index: self.index, indicatorHidden: true)
+                        self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
+                    }
+                })
                 if self.type == self.YOUTH {
                     self.lbTittle.text = "Youth".LocalizedString(str: self.language)
                     self.index = LoginScreen.indexYouthCate
@@ -53,13 +59,6 @@ class TuoiTreScreen: UIViewController {
                     self.lbTittle.text = "VNExpress".LocalizedString(str: self.language)
                     self.index = LoginScreen.indexVNExCate
                 }
-            }
-        })
-        
-        getListCategory(completion: { success in
-            DispatchQueue.main.async {
-                self.getAndDisplayData(index: self.index, indicatorHidden: true)
-                self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
             }
         })
         
@@ -127,6 +126,7 @@ class TuoiTreScreen: UIViewController {
             DispatchQueue.main.async {
                 self.cvCategory.dataSource = self
                 self.cvCategory.delegate = self
+                self.cvCategory.reloadData()
                 completion(true)
             }
         }
@@ -193,9 +193,6 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         cell.imgNew.image = nil
         cell.indicator.startAnimating()
         cell.indicator.isHidden = false
-        
-        cell.indicatorFavourite.isHidden = true
-        cell.btnFavourite.isHidden = false
         
         if !list[indexPath.row].imgLink.isEmpty {
             DispatchQueue.global().async {

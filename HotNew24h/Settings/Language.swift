@@ -44,11 +44,15 @@ class Language: UIViewController {
     }
 
     @IBAction func btnEnglishClicked(_ sender: Any) {
-        changeLanguage()
+        if self.language == "vi" {
+            changeLanguage()
+        }
     }
     
     @IBAction func btnVietnameseClicked(_ sender: Any) {
-        changeLanguage()
+        if self.language == "en" {
+            changeLanguage()
+        }
     }
     
     func changeLanguage() {

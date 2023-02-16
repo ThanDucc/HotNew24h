@@ -120,21 +120,25 @@ extension SeenScreen: UITableViewDelegate, UITableViewDataSource {
             if !list[indexPath.row].imgLink.isEmpty {
                 let dataDecoded: Data = Data(base64Encoded: list[indexPath.row].imgLink)!
                 cell.imgNew.image = UIImage(data: dataDecoded)
-                cell.indicator.stopAnimating()
-                cell.indicator.isHidden = true
             } else {
                 cell.imgNew.image = UIImage(named: "default")
-                cell.indicator.stopAnimating()
-                cell.indicator.isHidden = true
             }
+            
+            cell.indicator.stopAnimating()
+            cell.indicator.isHidden = true
             
             cell.imgLink = list[indexPath.row].imgLink
             cell.new = list[indexPath.row]
+            
+            cell.btnFavourite.isHidden = true
+            cell.indicatorFavourite.startAnimating()
             
             let lbTitleNew = cell.lbTittleNew.text!
             DispatchQueue.global().async {
                 let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTitleNew, phoneNumber: self.phoneNumber)
                 DispatchQueue.main.async {
+                    cell.indicatorFavourite.stopAnimating()
+                    cell.btnFavourite.isHidden = false
                     if check {
                         cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
                     } else {

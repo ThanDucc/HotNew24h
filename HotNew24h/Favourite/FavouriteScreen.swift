@@ -121,26 +121,15 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
             if !list[indexPath.row].imgLink.isEmpty {
                 let dataDecoded: Data = Data(base64Encoded: list[indexPath.row].imgLink)!
                 cell.imgNew.image = UIImage(data: dataDecoded)
-                cell.indicator.stopAnimating()
-                cell.indicator.isHidden = true
             } else {
                 cell.imgNew.image = UIImage(named: "default")
-                cell.indicator.stopAnimating()
-                cell.indicator.isHidden = true
             }
+            cell.indicator.stopAnimating()
+            cell.indicator.isHidden = true
             
             cell.new = list[indexPath.row]
-            let lbTitleNew = cell.lbTittleNew.text!
-            DispatchQueue.global().async {
-                let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTitleNew, phoneNumber: self.phoneNumber)
-                DispatchQueue.main.async {
-                    if check {
-                        cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
-                    } else {
-                        cell.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                    }
-                }
-            }
+
+            cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
             
             cell.screen = "Favourite"
             
