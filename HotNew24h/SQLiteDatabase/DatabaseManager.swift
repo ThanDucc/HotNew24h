@@ -22,7 +22,6 @@ class DatabaseManager {
     let USERS_TABLE = "users"
     let ID = "id"
     let PHONE_NUMBER = "phone_number"
-    let LANGUAGE = "language"
     
     let FAVOURITE_TABLE = "favourite"
     let SEEN_TABLE = "seen"
@@ -74,7 +73,7 @@ class DatabaseManager {
     
     func createTables() {
         if database.open() {
-            let queryUsersTable = "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " + PHONE_NUMBER + " TEXT NOT NULL, " + LANGUAGE + " TEXT NOT NULL)"
+            let queryUsersTable = "CREATE TABLE IF NOT EXISTS " + USERS_TABLE + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " + PHONE_NUMBER + " TEXT NOT NULL)"
             
             let queryFavouriteTable = "CREATE TABLE IF NOT EXISTS " + FAVOURITE_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL)"
             
@@ -100,7 +99,7 @@ class DatabaseManager {
             do {
                 let result = try db.executeQuery(querySelect, values: nil)
                 while result.next() {
-                    let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!,language: result.string(forColumnIndex: 2)!)
+                    let user = Users(id: Int(result.int(forColumnIndex: 0)), phoneNumber: result.string(forColumnIndex: 1)!)
                     listUsers.append(user)
                 }
             } catch let err {
@@ -131,35 +130,17 @@ class DatabaseManager {
         return check
     }
     
-    func insertAnUser(phoneNumber: String, language: String) {
+    func insertAnUser(phoneNumber: String) {
         usersQueue.inTransaction { db, rollback in
-            let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + " ," + LANGUAGE + ") VALUES (?, ?)"
+            let queryInsert = "INSERT INTO " + USERS_TABLE + " (" + PHONE_NUMBER + ") VALUES (?)"
             do {
-                try db.executeUpdate(queryInsert, values: [phoneNumber, language])
+                try db.executeUpdate(queryInsert, values: [phoneNumber])
                 db.commit()
             } catch let err {
                 print("Insert failed, error: \(err.localizedDescription)")
                 rollback.pointee = true
             }
         }
-    }
-    
-    func getLanguage(phoneNumber: String) -> String {
-        var language = ""
-        usersQueue.inTransaction { db, rollback in
-            let querySelect = "SELECT * FROM " + USERS_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                let result = try db.executeQuery(querySelect, values: nil)
-                while result.next() {
-                    let lang = result.string(forColumnIndex: 2)!
-                    language = lang
-                }
-            } catch let err {
-                print("Fetch failed, error: \(err.localizedDescription)")
-                rollback.pointee = true
-            }
-        }
-        return language
     }
     
     func deleteUserRow(phoneNumber: String) {
@@ -169,18 +150,6 @@ class DatabaseManager {
                 try db.executeUpdate(queryDelete, values: nil)
             } catch let err {
                 print("Delete failed, error: \(err.localizedDescription)")
-                rollback.pointee = true
-            }
-        }
-    }
-    
-    func updateLanguage(phoneNumber: String, language: String) {
-        usersQueue.inTransaction { db, rollback in
-            let queryDelete = "UPDATE " + USERS_TABLE + " SET " + LANGUAGE + " = '" + language + "' WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'"
-            do {
-                try db.executeUpdate(queryDelete, values: nil)
-            } catch let err {
-                print("Update failed, error: \(err.localizedDescription)")
                 rollback.pointee = true
             }
         }

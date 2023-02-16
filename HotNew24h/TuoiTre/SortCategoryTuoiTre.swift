@@ -34,16 +34,11 @@ class SortCategoryTuoiTre: UIViewController {
         tbListCategory.dropDelegate = self
         
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
-        // get language
-        DispatchQueue.global().async {
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
-            DispatchQueue.main.async {
-                self.language = language
-                self.lbTittle.text = "More".LocalizedString(str: language)
-                self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-            }
-        }
 
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        self.lbTittle.text = "More".LocalizedString(str: language)
+        self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+        
         getListCategory()
         tbListCategory.dragInteractionEnabled = true
         

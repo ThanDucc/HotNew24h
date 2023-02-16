@@ -51,20 +51,15 @@ class LoginScreen: UIViewController {
         DatabaseManager.shared.createDatabase()
         DatabaseManager.shared.createTables()
         
-        // get phone number to get languge to display UI
-        let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
-        if phoneNumber == nil {
-            language = "en"
-            self.setupUI()
+        let lang = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")
+        
+        if lang == nil {
+            self.language = "en"
+            Foundation.UserDefaults.standard.set(self.language, forKey: "LanguageAllApp")
         } else {
-            DispatchQueue.global().async {
-                let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-                DispatchQueue.main.async {
-                    self.language = language
-                    self.setupUI()
-                }
-            }
+            self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
         }
+        self.setupUI()
         
         // add gesture to login with Facebook
         let fbTapGesture = UITapGestureRecognizer(target: self, action: #selector(logInFacebook(_:)))
@@ -105,7 +100,7 @@ class LoginScreen: UIViewController {
             DispatchQueue.global().async {
                 let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: (user?.uid)!)
                 if !check {
-                    Register().registerAccount(userId: (user?.uid)!)
+                    Register().registerAccount(userId: (user?.uid)!, language: self.language)
                 }
             }
             self.defaults.set((user?.uid)!, forKey: "userPhoneNumber")
@@ -142,7 +137,7 @@ class LoginScreen: UIViewController {
                 DispatchQueue.global().async {
                     let check = DatabaseManager.shared.checkPhoneNumber(phoneNumber: email!)
                     if !check {
-                        Register().registerAccount(userId: email!)
+                        Register().registerAccount(userId: email!, language: self.language)
                     }
                 }
                 self.defaults.set(email, forKey: "userPhoneNumber")

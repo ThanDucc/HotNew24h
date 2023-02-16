@@ -9,9 +9,9 @@ import Foundation
 
 class Register {
     
-    func registerAccount(userId: String) {
+    func registerAccount(userId: String, language: String) {
         DispatchQueue.global().async {
-            DatabaseManager.shared.insertAnUser(phoneNumber: userId, language: "en")
+            DatabaseManager.shared.insertAnUser(phoneNumber: userId)
         }
         
         DispatchQueue.global().async {

@@ -36,18 +36,13 @@ class DeleteAcc: UIViewController {
         
         indicator.isHidden = true
 
-        DispatchQueue.global().async {
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber!)
-            DispatchQueue.main.async {
-                self.language = language
-                self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
-                self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
-                self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
-                self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-                self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-                self.lbStatus.text = self.lbStatus.text?.LocalizedString(str: language)
-            }
-        }
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
+        self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
+        self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
+        self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+        self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+        self.lbStatus.text = self.lbStatus.text?.LocalizedString(str: language)
 
         tfSMSCode.isHidden = true
         distance.constant = 0

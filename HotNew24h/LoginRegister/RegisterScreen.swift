@@ -20,26 +20,13 @@ class RegisterScreen: UIViewController {
     @IBOutlet weak var lbStatus: UILabel!
     @IBOutlet weak var btnHadAcc: UIButton!
     
-    let defaults = Foundation.UserDefaults.standard
     var language = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // get phone number to get languge to display UI
-        let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
-        if phoneNumber == nil {
-            language = "en"
-            self.setupUI()
-        } else {
-            DispatchQueue.global().async {
-                let language = DatabaseManager.shared.getLanguage(phoneNumber: phoneNumber!)
-                DispatchQueue.main.async {
-                    self.language = language
-                    self.setupUI()
-                }
-            }
-        }
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        self.setupUI()
     }
     
     func setupUI() {
@@ -115,9 +102,9 @@ class RegisterScreen: UIViewController {
                     self.lbStatus.text = "SMS code is incorrect!".LocalizedString(str: self.language)
                 } else {
                     self.lbStatus.text = "Register successfully!".LocalizedString(str: self.language)
-                    self.defaults.set(self.tfPhoneNumber.text!, forKey: "userPhoneNumber")
+                    Foundation.UserDefaults.standard.set(self.tfPhoneNumber.text!, forKey: "userPhoneNumber")
                     
-                    Register().registerAccount(userId: self.tfPhoneNumber.text!)
+                    Register().registerAccount(userId: self.tfPhoneNumber.text!, language: self.language)
                     Foundation.UserDefaults.standard.set(true, forKey: "LOG_IN")
                                                         
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {

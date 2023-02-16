@@ -46,14 +46,9 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
         
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
         
-        DispatchQueue.global().async {
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
-            DispatchQueue.main.async {
-                self.language = language
-                self.btnBack.setTitle(self.btnBack.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-                self.lbShare.text = self.lbShare.text?.LocalizedString(str: language)
-            }
-        }
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        self.btnBack.setTitle(self.btnBack.titleLabel?.text?.LocalizedString(str: language), for: .normal)
+        self.lbShare.text = self.lbShare.text?.LocalizedString(str: language)
        
         DispatchQueue.global().async {
             let check: Bool = DatabaseManager.shared.checkFavourite(tittle: self.news.title, phoneNumber: self.phoneNumber)

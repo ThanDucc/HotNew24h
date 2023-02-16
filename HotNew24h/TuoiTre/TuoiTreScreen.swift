@@ -100,13 +100,8 @@ class TuoiTreScreen: UIViewController {
     
     func getLanguage(completion: @escaping(Bool) -> Void) {
         // get language
-        DispatchQueue.global().async {
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber)
-            DispatchQueue.main.async {
-                self.language = language
-                completion(true)
-            }
-        }
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        completion(true)
     }
     
     // get list category

@@ -28,19 +28,14 @@ class Language: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        DispatchQueue.global().async {
-            let language = DatabaseManager.shared.getLanguage(phoneNumber: self.phoneNumber!)
-            DispatchQueue.main.async {
-                self.language = language
-                switch language {
-                case "en":
-                    self.english()
-                default:
-                    self.vietnamese()
-                }
-                self.updateLanguage()
-            }
+        self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
+        switch language {
+        case "en":
+            self.english()
+        default:
+            self.vietnamese()
         }
+        self.updateLanguage()
     }
 
     @IBAction func btnEnglishClicked(_ sender: Any) {
@@ -65,12 +60,7 @@ class Language: UIViewController {
             self.language = "vi"
         }
         updateLanguage()
-        DispatchQueue.global().async {
-            DatabaseManager.shared.updateLanguage(phoneNumber: self.phoneNumber!, language: self.language)
-            DispatchQueue.main.async {
-                self.delegateLang?.updateLangugeAll()
-            }
-        }
+        self.delegateLang?.updateLangugeAll()
     }
     
     func english() {
@@ -87,6 +77,7 @@ class Language: UIViewController {
         lbVietnamese.text = lbVietnamese.text?.LocalizedString(str: language)
         lbEnglish.text = lbEnglish.text?.LocalizedString(str: language)
         lbLanguage.text = lbLanguage.text?.LocalizedString(str: language)
+        Foundation.UserDefaults.standard.set(language, forKey: "LanguageAllApp")
     }
     
 }
