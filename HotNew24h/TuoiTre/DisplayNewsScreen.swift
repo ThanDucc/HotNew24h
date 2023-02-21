@@ -20,6 +20,7 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     private var phoneNumber = ""
     var imgLink = ""
     var index = 0
+    var isFavourite = false
     
     @IBOutlet weak var webView: WKWebView!
     @IBOutlet weak var indicator: UIActivityIndicatorView!
@@ -53,6 +54,7 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
         DispatchQueue.global().async {
             let check: Bool = DatabaseManager.shared.checkFavourite(tittle: self.news.title, phoneNumber: self.phoneNumber)
             DispatchQueue.main.async {
+                self.isFavourite = check
                 if check {
                     self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
                 } else {
@@ -112,9 +114,8 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
             img = self.imgLink
         }
         
-        DispatchQueue.global().async {
-            let check = DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: self.phoneNumber)
-            if !check {
+        if !isFavourite {
+            DispatchQueue.global().async {
                 var htmlString = self.news.htmlString
                 if htmlString.isEmpty {
                     htmlString = try! String(contentsOf: URL(string: self.news.link)!)
@@ -125,21 +126,19 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
                     self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
                     NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
                 }
-            } else {
-                DispatchQueue.main.async {
-                    self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                    self.deleteFavourite(phoneNumber: self.phoneNumber, tittle: tittle, completion: { success in
-                        if success {
-                            DispatchQueue.main.async {
-                                self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
-                                NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
-                            }
-                        }
-                    })
-                }
             }
+        } else {
+            self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+            self.deleteFavourite(phoneNumber: self.phoneNumber, tittle: tittle, completion: { success in
+                if success {
+                    DispatchQueue.main.async {
+                        self.btnFavourite.setImage(UIImage(systemName: "heart"), for: .normal)
+                        NotificationCenter.default.post(name: Notification.Name("Favourite Changed"), object: nil)
+                    }
+                }
+            })
         }
-
+        isFavourite = !isFavourite
     }
     
     func deleteFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {

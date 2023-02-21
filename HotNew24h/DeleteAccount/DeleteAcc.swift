@@ -12,6 +12,10 @@ protocol DeleteAccountClicked {
     func deleteAcc(status: Bool)
 }
 
+protocol Logout {
+    func logout(status: Bool)
+}
+
 class DeleteAcc: UIViewController {
 
     @IBOutlet weak var lblDeleteAcc: UILabel!
@@ -28,6 +32,10 @@ class DeleteAcc: UIViewController {
     private var bool = false
     var delegateDelete: DeleteAccountClicked?
     
+    var tittle = "Delete Account"
+    var warning = "Are you sure to delete your account?"
+    var delegateLogout: Logout?
+    
     private var language = ""
     let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
     
@@ -37,8 +45,8 @@ class DeleteAcc: UIViewController {
         indicator.isHidden = true
 
         self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
-        self.lblWarning.text = self.lblWarning.text?.LocalizedString(str: language)
-        self.lblDeleteAcc.text = self.lblDeleteAcc.text?.LocalizedString(str: language)
+        self.lblWarning.text = warning.LocalizedString(str: language)
+        self.lblDeleteAcc.text = tittle.LocalizedString(str: language)
         self.tfSMSCode.placeholder = self.tfSMSCode.placeholder?.LocalizedString(str: language)
         self.btnYes.setTitle(self.btnYes.titleLabel?.text?.LocalizedString(str: language), for: .normal)
         self.btnCancel.setTitle(self.btnCancel.titleLabel?.text?.LocalizedString(str: language), for: .normal)
@@ -109,24 +117,32 @@ class DeleteAcc: UIViewController {
     // SDK Android và iOS hiện không hỗ trợ tái xác thực.
     
     @IBAction func btnYesClicked(_ sender: Any) {
-        let user = Auth.auth().currentUser
-        if user?.phoneNumber != nil {
-            if !bool {
-                sendSMS()
-                bool = true
+        if tittle == "Delete Account" {
+            let user = Auth.auth().currentUser
+            if user?.phoneNumber != nil {
+                if !bool {
+                    sendSMS()
+                    bool = true
+                } else {
+                    indicator.startAnimating()
+                    indicator.isHidden = false
+                    deleteAccByPhoneNumber()
+                }
             } else {
                 indicator.startAnimating()
                 indicator.isHidden = false
-                deleteAccByPhoneNumber()
+                deleteAccByEmail()
             }
         } else {
-            indicator.startAnimating()
-            indicator.isHidden = false
-            deleteAccByEmail()
+            self.delegateLogout?.logout(status: true)
         }
     }
     
     @IBAction func btnCancelClicked(_ sender: Any) {
-        self.delegateDelete?.deleteAcc(status: false)
+        if tittle == "Delete Account" {
+            self.delegateDelete?.deleteAcc(status: false)
+        } else {
+            self.delegateLogout?.logout(status: false)
+        }
     }
 }

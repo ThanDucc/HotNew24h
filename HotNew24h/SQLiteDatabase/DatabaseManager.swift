@@ -32,6 +32,7 @@ class DatabaseManager {
     let LINK = "link"
     let DESCRIPTION = "description"
     let HTML_STRING = "html_string"
+    let DATE_TIME = "date_time"
     
     let CATEGORY_TABLE = "category"
     let NAME = "name"
@@ -77,7 +78,7 @@ class DatabaseManager {
             
             let queryFavouriteTable = "CREATE TABLE IF NOT EXISTS " + FAVOURITE_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL)"
             
-            let querySeenTable = "CREATE TABLE IF NOT EXISTS " + SEEN_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL, " + ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)"
+            let querySeenTable = "CREATE TABLE IF NOT EXISTS " + SEEN_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + TITTLE + " TEXT NOT NULL, " + PUB_DATE + " TEXT NOT NULL, " + DESCRIPTION + " TEXT NOT NULL, " + IMG_LINK + " TEXT NOT NULL, " + HTML_STRING + " TEXT NOT NULL, " + LINK + " TEXT NOT NULL, " + DATE_TIME + " DATETIME NOT NULL)"
 
             let queryCategoryTable = "CREATE TABLE IF NOT EXISTS " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " TEXT NOT NULL, " + NAME + " TEXT NOT NULL, " + IS_HIDDEN + " TEXT NOT NULL, " + POSITION + " TEXT NOT NULL, " + LINK_CATEGORY + " TEXT NOT NULL, " + TYPE + " TEXT NOT NULL)"
             
@@ -297,11 +298,11 @@ class DatabaseManager {
         }
     }
     
-    func addToSeen(phoneNumber: String, title: String, pubDate: String, description: String, imgLink: String, htmlString: String, link: String) {
+    func addToSeen(phoneNumber: String, title: String, pubDate: String, description: String, imgLink: String, htmlString: String, link: String, dateTime: String) {
         seenQueue.inTransaction { db, rollback in
-            let queryInsert = "INSERT INTO " + SEEN_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + ") VALUES (?, ?, ?, ?, ?, ?, ?)"
+            let queryInsert = "INSERT INTO " + SEEN_TABLE + " (" + PHONE_NUMBER + " ," + TITTLE + " ," + PUB_DATE + " ," + DESCRIPTION + " ," + IMG_LINK + " ," + HTML_STRING + " ," + LINK + " ," + DATE_TIME + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             do {
-                try db.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link])
+                try db.executeUpdate(queryInsert, values: [phoneNumber, title, pubDate, description, imgLink, htmlString, link, dateTime])
             } catch let err {
                 print("Insert failed, error: \(err.localizedDescription)")
                 rollback.pointee = true
@@ -312,7 +313,7 @@ class DatabaseManager {
     func getSeenList(phoneNumber: String, page: Int) -> [News] {
         var listNews: [News] = []
         seenQueue.inTransaction { db, rollback in
-            let querySelect = "SELECT * FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + "ORDER BY " + ID + " DESC" + " LIMIT " + String(page) + ", 10"
+            let querySelect = "SELECT * FROM " + SEEN_TABLE + " WHERE " + PHONE_NUMBER + " = '" + phoneNumber + "'" + "ORDER BY " + DATE_TIME + " DESC" + " LIMIT " + String(page) + ", 10"
             do {
                 let result = try db.executeQuery(querySelect, values: nil)
                 while result.next() {
@@ -345,6 +346,19 @@ class DatabaseManager {
             }
         }
         return check
+    }
+    
+    func updateDateTimeSeenTable(tittle: String, phoneNumber: String, dateTime: String) {
+        seenQueue.inTransaction { db, rollback in
+            let Tittle = tittle.replacingOccurrences(of: "'", with: "\\\\")
+            let queryDelete = "UPDATE " + SEEN_TABLE + " SET " + DATE_TIME + " = '" + dateTime + "' WHERE " + TITTLE + " = '" + Tittle + "' AND " + PHONE_NUMBER + " = '" + phoneNumber + "'"
+            do {
+                try db.executeUpdate(queryDelete, values: nil)
+            } catch let err {
+                print("Update failed, error: \(err.localizedDescription)")
+                rollback.pointee = true
+            }
+        }
     }
     
     func deleteSeenRow(tittle: String, phoneNumber: String) {

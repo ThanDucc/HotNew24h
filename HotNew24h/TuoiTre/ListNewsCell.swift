@@ -47,10 +47,8 @@ class ListNewsCell: UITableViewCell {
             indicatorFavourite.startAnimating()
         }
         
-        let tittleNew = self.lbTittleNew.text!
-        DispatchQueue.global().async {
-            let check = DatabaseManager.shared.checkFavourite(tittle: tittleNew, phoneNumber: phoneNumber)
-            if !check {
+        if !new.isFavourite! {
+            DispatchQueue.global().async {
                 self.addToFavourite(phoneNumber: phoneNumber, tittle: tittle!, completion: { success in
                     if success {
                         DispatchQueue.main.async {
@@ -60,7 +58,9 @@ class ListNewsCell: UITableViewCell {
                         }
                     }
                 })
-            } else {
+            }
+        } else {
+            DispatchQueue.global().async {
                 let tittle = self.new.title.replacingOccurrences(of: "'", with: "\\\\")
                 if self.screen == "Favourite" {
                     DispatchQueue.main.async {
@@ -79,6 +79,7 @@ class ListNewsCell: UITableViewCell {
                 }
             }
         }
+        new.isFavourite = !new.isFavourite!
     }
     
     func addToFavourite(phoneNumber: String, tittle: String, completion: @escaping (Bool) -> Void) {
@@ -91,6 +92,8 @@ class ListNewsCell: UITableViewCell {
             let url: URL = URL(string: new.imgLink)!
             let data: Data = try! Data(contentsOf: url)
             img = UIImage(data: data)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+        } else {
+            img = new.imgLink
         }
         DispatchQueue.global().async {
             DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: self.new.pubDate, description: self.new.description, imgLink: img, htmlString: htmlString, link: self.new.link)

@@ -99,3 +99,4 @@
 "SMS is invalid!" = "Mã SMS không chính xác!";
 "Error to send SMS" = "Lỗi khi gửi SMS";
 "Delete account failed" = "Xoá tài khoản thất bại";
+"Are you sure to logout account?" = "Bạn có chắc muốn đăng xuất không?";

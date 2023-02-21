@@ -122,6 +122,7 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
             cell.indicator.isHidden = true
             
             cell.new = list[indexPath.row]
+            cell.new.isFavourite = true
 
             cell.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)
             
@@ -157,14 +158,15 @@ extension FavouriteScreen: UITableViewDelegate, UITableViewDataSource {
     
     func addSeenList(news: News) {
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
+        let formatDate = DateFormatter()
+        formatDate.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
         DispatchQueue.global().async {
-            let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: self.phoneNumber)
+            let check = DatabaseManager.shared.checkSeen(tittle: tittle, phoneNumber: self.phoneNumber)
             if check {
-                DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
-                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
+                DatabaseManager.shared.updateDateTimeSeenTable(tittle: tittle, phoneNumber: self.phoneNumber, dateTime: formatDate.string(from: Date()))
             } else {
-                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link)
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: news.imgLink, htmlString: news.htmlString, link: news.link, dateTime: formatDate.string(from: Date()))
             }
         }
     }

@@ -218,6 +218,7 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         DispatchQueue.global().async {
             let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTittleNew, phoneNumber: self.phoneNumber)
             DispatchQueue.main.async {
+                cell.new.isFavourite = check
                 cell.indicatorFavourite.stopAnimating()
                 cell.btnFavourite.isHidden = false
                 if check {
@@ -257,14 +258,15 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
         htmlString = try! String(contentsOf: URL(string: news.link)!) 
 
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
+        let formatDate = DateFormatter()
+        formatDate.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
         DispatchQueue.global().async {
-            let check = DatabaseManager.shared.checkSeen(tittle: news.title, phoneNumber: self.phoneNumber)
+            let check = DatabaseManager.shared.checkSeen(tittle: tittle, phoneNumber: self.phoneNumber)
             if check {
-                DatabaseManager.shared.deleteSeenRow(tittle: news.title, phoneNumber: self.phoneNumber)
-                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
+                DatabaseManager.shared.updateDateTimeSeenTable(tittle: tittle, phoneNumber: self.phoneNumber, dateTime: formatDate.string(from: Date()))
             } else {
-                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link)
+                DatabaseManager.shared.addToSeen(phoneNumber: self.phoneNumber, title: tittle, pubDate: news.pubDate, description: news.description, imgLink: imgLink, htmlString: htmlString, link: news.link, dateTime: formatDate.string(from: Date()))
             }
         }
     }

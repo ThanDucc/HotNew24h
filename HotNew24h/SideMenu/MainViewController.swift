@@ -216,10 +216,15 @@ extension MainViewController: MenuDelegate {
                 }
                 present(viewControllerToPresent, animated: true, completion: nil)
             case "Log out":
-                if Auth.auth().currentUser != nil {
-                    AuthManager.shared.logOut()
+                let viewControllerToPresent = self.storyboard?.instantiateViewController(withIdentifier: "deleteAcc") as! DeleteAcc
+                viewControllerToPresent.delegateDelete = self
+                viewControllerToPresent.delegateLogout = self
+                viewControllerToPresent.tittle = "Log out"
+                viewControllerToPresent.warning = "Are you sure to logout account?"
+                if let sheet = viewControllerToPresent.sheetPresentationController {
+                    sheet.detents = [.medium()]
                 }
-                changeLoginScreen()
+                present(viewControllerToPresent, animated: true, completion: nil)
             default:
                 break
             }
@@ -423,4 +428,18 @@ extension MainViewController: DeleteAccountClicked {
         }
     }
     
+}
+
+extension MainViewController: Logout {
+    func logout(status: Bool) {
+        dismiss(animated: true, completion: nil)
+        if status {
+            if Auth.auth().currentUser != nil {
+                AuthManager.shared.logOut()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.changeLoginScreen()
+            }
+        }
+    }
 }

@@ -130,6 +130,7 @@ extension SeenScreen: UITableViewDelegate, UITableViewDataSource {
             DispatchQueue.global().async {
                 let check: Bool = DatabaseManager.shared.checkFavourite(tittle: lbTitleNew, phoneNumber: self.phoneNumber)
                 DispatchQueue.main.async {
+                    cell.new.isFavourite = check
                     cell.indicatorFavourite.stopAnimating()
                     cell.btnFavourite.isHidden = false
                     if check {
