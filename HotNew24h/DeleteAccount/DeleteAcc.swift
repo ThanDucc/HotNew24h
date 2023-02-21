@@ -25,10 +25,10 @@ class DeleteAcc: UIViewController {
     @IBOutlet weak var btnCancel: UIButton!
     @IBOutlet weak var indicator: UIActivityIndicatorView!
     
-    var bool = false
+    private var bool = false
     var delegateDelete: DeleteAccountClicked?
     
-    var language = ""
+    private var language = ""
     let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
     
     override func viewDidLoad() {

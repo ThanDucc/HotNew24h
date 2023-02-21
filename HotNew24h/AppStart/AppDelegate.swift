@@ -9,7 +9,6 @@ import UIKit
 import FirebaseCore
 import FacebookCore
 import GoogleSignIn
-import FirebaseDynamicLinks
 import FirebaseAuth
 
 @main

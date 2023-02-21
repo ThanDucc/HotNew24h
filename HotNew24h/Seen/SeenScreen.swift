@@ -15,11 +15,11 @@ class SeenScreen: UIViewController {
     
     var list: [News] = []
     weak var delegateCate: CategoryDelegate?
-    var phoneNumber = ""
-    var isLoading = false
-    var language = ""
-    var page = 0
-    var count = 0
+    private var phoneNumber = ""
+    private var isLoading = false
+    private var language = ""
+    private var page = 0
+    private var count = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -121,7 +121,6 @@ extension SeenScreen: UITableViewDelegate, UITableViewDataSource {
             cell.indicator.stopAnimating()
             cell.indicator.isHidden = true
             
-            cell.imgLink = list[indexPath.row].imgLink
             cell.new = list[indexPath.row]
             
             cell.btnFavourite.isHidden = true

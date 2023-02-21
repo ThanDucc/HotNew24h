@@ -16,8 +16,8 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     
     @IBOutlet weak var lbShare: UILabel!
     var news: News = News(title: "", pubDate: "", link: "", description: "", imgLink: "", htmlString: "")
-    var language = ""
-    var phoneNumber = ""
+    private var language = ""
+    private var phoneNumber = ""
     var imgLink = ""
     var index = 0
     
@@ -103,6 +103,15 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
     @IBAction func btnFavouriteClick(_ sender: Any) {
         let tittle = news.title.replacingOccurrences(of: "'", with: "\\\\")
         
+        var img: String = ""
+        if self.imgLink.contains("https") {
+            let url: URL = URL(string: self.imgLink)!
+            let data: Data = try! Data(contentsOf: url)
+            img = UIImage(data: data)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+        } else {
+            img = self.imgLink
+        }
+        
         DispatchQueue.global().async {
             let check = DatabaseManager.shared.checkFavourite(tittle: tittle, phoneNumber: self.phoneNumber)
             if !check {
@@ -110,7 +119,7 @@ class DisplayNewsScreen: UIViewController, WKNavigationDelegate {
                 if htmlString.isEmpty {
                     htmlString = try! String(contentsOf: URL(string: self.news.link)!)
                 }
-                DatabaseManager.shared.addToFavourite(phoneNumber: self.phoneNumber, title: tittle, pubDate: self.news.pubDate, description: self.news.description, imgLink: self.imgLink, htmlString: htmlString, link: self.news.link)
+                DatabaseManager.shared.addToFavourite(phoneNumber: self.phoneNumber, title: tittle, pubDate: self.news.pubDate, description: self.news.description, imgLink: img, htmlString: htmlString, link: self.news.link)
 
                 DispatchQueue.main.async {
                     self.btnFavourite.setImage(UIImage(systemName: "heart.fill"), for: .normal)

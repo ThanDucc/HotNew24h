@@ -69,15 +69,14 @@ class SideMenu: UIViewController {
         if list.count == 3 {
             list = []
             let parseJson = ParseJson()
-            parseJson.getData()
-
-            let newsData = parseJson.newsData
-            for i in 0..<(newsData?.data.news.count)! {
-                list.append((newsData?.data.news[i].name)!)
-            }
-            
-            list = list + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
-            tbListOption.reloadData()
+            parseJson.getData(completion: { success in
+                let newsData = parseJson.newsData
+                for i in 0..<(newsData?.data.news.count)! {
+                    self.list.append((newsData?.data.news[i].name)!)
+                }
+                self.list = self.list + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
+                self.tbListOption.reloadData()
+            })
         } else {
             delegateMenuItem!.close(bool: false)
         }

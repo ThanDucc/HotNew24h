@@ -14,6 +14,7 @@ class News {
     var link: String
     var description: String
     var htmlString: String
+    var isFavourite: Bool?
 
     init(title: String, pubDate: String, link: String, description: String, imgLink: String, htmlString: String) {
         self.title = title

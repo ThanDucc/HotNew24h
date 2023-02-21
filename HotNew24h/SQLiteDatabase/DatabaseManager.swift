@@ -160,20 +160,20 @@ class DatabaseManager {
             let queryInsert = "INSERT INTO " + CATEGORY_TABLE + " (" + PHONE_NUMBER + " ," + NAME + " ," + IS_HIDDEN + " ," + POSITION + " ," + LINK_CATEGORY + " ," + TYPE + ") VALUES (?, ?, ?, ?, ?, ?)"
 
             let parseJson = ParseJson()
-            parseJson.getData()
-
-            let newsData = parseJson.newsData
-            if newsData?.data.code == 200 {
-                let news: [Newspaper] = newsData!.data.news
-                for i in 0..<news.count {
-                    for j in 0..<news[i].category.count {
-                        try! db.executeUpdate(queryInsert, values: [phoneNumber, news[i].category[j].name, "false", j.description, news[i].link + news[i].category[j].path + news[i].endpoint, news[i].name])
+            parseJson.getData(completion: { success in
+                let newsData = parseJson.newsData
+                if newsData?.data.code == 200 {
+                    let news: [Newspaper] = newsData!.data.news
+                    for i in 0..<news.count {
+                        for j in 0..<news[i].category.count {
+                            try! db.executeUpdate(queryInsert, values: [phoneNumber, news[i].category[j].name, "false", String(j), news[i].link + news[i].category[j].path + news[i].endpoint, news[i].name])
+                        }
                     }
+                } else {
+                    print("Get data from API failed")
+                    rollback.pointee = true
                 }
-            } else {
-                print("Get data from API failed")
-                rollback.pointee = true
-            }
+            })
         }
     }
 

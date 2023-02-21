@@ -14,11 +14,11 @@ class FavouriteScreen: UIViewController {
     @IBOutlet weak var lbTittle: UILabel!
     var list: [News] = []
     weak var delegateCate: CategoryDelegate?
-    var phoneNumber = ""
-    var language = ""
-    var isLoading = false
-    var page = 0
-    var count = 0
+    private var phoneNumber = ""
+    private var language = ""
+    private var isLoading = false
+    private var page = 0
+    private var count = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()

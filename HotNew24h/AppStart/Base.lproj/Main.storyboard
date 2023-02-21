@@ -657,7 +657,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4s0-s0-cGj">
-                                <rect key="frame" x="0.0" y="46" width="414" height="100"/>
+                                <rect key="frame" x="0.0" y="44" width="414" height="100"/>
                                 <color key="backgroundColor" red="1" green="0.1372824215" blue="0.4075696426" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="100" id="FO1-aT-dos"/>
@@ -715,8 +715,8 @@
                                 <color key="textColor" systemColor="systemRedColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" hidesWhenStopped="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="Vg1-S7-0Pa">
-                                <rect key="frame" x="197" y="373" width="20" height="20"/>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="Vg1-S7-0Pa">
+                                <rect key="frame" x="188.5" y="364.5" width="37" height="37"/>
                                 <color key="color" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </activityIndicatorView>
                         </subviews>
@@ -1013,17 +1013,16 @@
                                             <action selector="openMenuButtonTapped:" destination="a74-0X-0vF" eventType="touchUpInside" id="UfC-5y-rBS"/>
                                         </connections>
                                     </button>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdO-xt-bYW">
-                                        <rect key="frame" x="186" y="49" width="42" height="21"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdO-xt-bYW">
+                                        <rect key="frame" x="179" y="46.5" width="56" height="26.5"/>
                                         <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
                                         <color key="textColor" red="1" green="0.032779611649999998" blue="0.31380581860000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QcZ-L7-WhE">
-                                        <rect key="frame" x="358" y="60" width="40" height="40"/>
+                                        <rect key="frame" x="351.5" y="60" width="46.5" height="40"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="40" id="bb4-Vb-l6w"/>
-                                            <constraint firstAttribute="width" constant="40" id="vpO-5U-ZRj"/>
                                         </constraints>
                                         <state key="normal" title="Button"/>
                                         <buttonConfiguration key="configuration" style="plain" image="arrowshape.turn.up.backward.fill" catalog="system">
@@ -1042,7 +1041,7 @@
                                     <constraint firstAttribute="trailing" secondItem="QcZ-L7-WhE" secondAttribute="trailing" constant="16" id="Sin-db-9WZ"/>
                                     <constraint firstItem="w9U-lb-uZb" firstAttribute="leading" secondItem="Nvs-gu-Jv4" secondAttribute="leading" constant="16" id="j7U-IW-Uma"/>
                                     <constraint firstItem="w9U-lb-uZb" firstAttribute="top" secondItem="Nvs-gu-Jv4" secondAttribute="top" constant="60" id="x2Y-hU-vhf"/>
-                                    <constraint firstItem="QdO-xt-bYW" firstAttribute="centerY" secondItem="w9U-lb-uZb" secondAttribute="centerY" id="yQx-pf-brZ"/>
+                                    <constraint firstItem="QdO-xt-bYW" firstAttribute="centerY" secondItem="w9U-lb-uZb" secondAttribute="centerY" constant="-20.5" id="yQx-pf-brZ"/>
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="fVz-zL-Q3M">
@@ -1256,8 +1255,8 @@
                                 <color key="separatorColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <inset key="separatorInset" minX="15" minY="0.0" maxX="15" maxY="0.0"/>
                             </tableView>
-                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="P6G-0t-NHR">
-                                <rect key="frame" x="197" y="438" width="20" height="20"/>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="P6G-0t-NHR">
+                                <rect key="frame" x="188.5" y="487.5" width="37" height="37"/>
                             </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="ccc-TO-IOC"/>

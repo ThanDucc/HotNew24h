@@ -49,7 +49,6 @@
 		18C1AA3629540892001C86BC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 18C1AA3429540892001C86BC /* LaunchScreen.storyboard */; };
 		18C1AA3F2954091B001C86BC /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C1AA3E2954091B001C86BC /* LoginScreen.swift */; };
 		18C1AA41295433E6001C86BC /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C1AA40295433E6001C86BC /* RegisterScreen.swift */; };
-		18F12FD3298BB2700065A9FF /* FirebaseDynamicLinks in Frameworks */ = {isa = PBXBuildFile; productRef = 18F12FD2298BB2700065A9FF /* FirebaseDynamicLinks */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -107,7 +106,6 @@
 				184A198729598893006201FD /* FirebaseAuth in Frameworks */,
 				183D23792964357B001583E5 /* FMDB in Frameworks */,
 				1832650A29767E2E00815E42 /* FacebookLogin in Frameworks */,
-				18F12FD3298BB2700065A9FF /* FirebaseDynamicLinks in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,7 +293,6 @@
 				183D23782964357B001583E5 /* FMDB */,
 				1832650929767E2E00815E42 /* FacebookLogin */,
 				18222AD82989052700F4DE87 /* GoogleSignIn */,
-				18F12FD2298BB2700065A9FF /* FirebaseDynamicLinks */,
 			);
 			productName = HotNew24h;
 			productReference = 18C1AA2629540890001C86BC /* HotNew24h.app */;
@@ -684,11 +681,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 184A197E29597CD5006201FD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
-		};
-		18F12FD2298BB2700065A9FF /* FirebaseDynamicLinks */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 184A197E29597CD5006201FD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseDynamicLinks;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -15,10 +15,11 @@ class SortCategoryTuoiTre: UIViewController {
     
     var list: [String] = []
     var listHidden: [String] = []
-    var phoneNumber = ""
-    var language = ""
+    private var phoneNumber = ""
+    private var language = ""
     var type = ""
     var nameCate = ""
+    private var change = false
     
     @IBOutlet weak var tbListCategory: UITableView!
     
@@ -64,8 +65,10 @@ class SortCategoryTuoiTre: UIViewController {
     @IBAction func btnDone(_ sender: Any) {
         if listHidden.contains("false") {
             DispatchQueue.global().async {
-                for i in 0..<self.list.count {
-                    DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+                if self.change {
+                    for i in 0..<self.list.count {
+                        DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+                    }
                 }
                 DispatchQueue.main.async {
                     self.delegateSortCate?.update(nameCate: self.nameCate)
@@ -118,6 +121,7 @@ extension SortCategoryTuoiTre: UITableViewDelegate, UITableViewDataSource {
         listHidden.remove(at: sourceIndexPath.row)
         listHidden.insert(item2, at:destinationIndexPath.row)
         
+        change = true
         tbListCategory.reloadData()
     }
     
@@ -148,6 +152,7 @@ extension SortCategoryTuoiTre: UITableViewDropDelegate {
 extension SortCategoryTuoiTre: ClickToHideCate {
     
     func clickHideCate(indexOfRow: Int) {
+        change = true
         if listHidden[indexOfRow] == "false" {
             listHidden[indexOfRow] = "true"
         } else {

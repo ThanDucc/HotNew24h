@@ -14,7 +14,7 @@ protocol UpdateLanguge {
 
 class Language: UIViewController {
     
-    var language = ""
+    private var language = ""
     let phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")
     
     @IBOutlet weak var btnVietnamese: UIButton!

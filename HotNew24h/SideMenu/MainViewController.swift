@@ -29,17 +29,17 @@ class MainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let parseJson = ParseJson()
-        parseJson.getData()
-
-        let newsData = parseJson.newsData
-        for i in 0..<(newsData?.data.news.count)! {
-            sideMenuList.append((newsData?.data.news[i].name)!)
-        }
-        
-        sideMenuList = sideMenuList + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
-        
-        MainViewController.nameSideMenu = (newsData?.data.news[0].name)!
+        setUpSideMenu(completion: { success in
+            if success {
+                // Default Main View Controller
+                self.sideMenuViewController.list = self.sideMenuList
+                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
+                self.sideMenuViewController.tbListOption.reloadData()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.sideMenuViewController.view.isHidden = false
+                }
+            }
+        })
     
         // Shadow Background View
         self.sideMenuShadowView = UIView(frame: self.view.bounds)
@@ -58,7 +58,7 @@ class MainViewController: UIViewController {
         let storyboard = UIStoryboard(name: "Main", bundle: Bundle.main)
         self.sideMenuViewController = storyboard.instantiateViewController(withIdentifier: "MenuController") as? SideMenu
         self.sideMenuViewController.delegateMenuItem = self
-        self.sideMenuViewController.list = sideMenuList
+        
         view.insertSubview(self.sideMenuViewController!.view, at: self.revealSideMenuOnTop ? 2 : 0)
         addChild(self.sideMenuViewController!)
         self.sideMenuViewController!.didMove(toParent: self)
@@ -81,13 +81,27 @@ class MainViewController: UIViewController {
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
         panGestureRecognizer.delegate = self
         view.addGestureRecognizer(panGestureRecognizer)
-        
-        // Default Main View Controller
-        showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.sideMenuViewController.view.isHidden = false
-        }
 
+    }
+    
+    func setUpSideMenu(completion: @escaping(Bool) -> Void) {
+        let parseJson = ParseJson()
+        parseJson.getData(completion: { success in
+            if success {
+                let newsData = parseJson.newsData
+                for i in 0..<(newsData?.data.news.count)! {
+                    self.sideMenuList.append((newsData?.data.news[i].name)!)
+                }
+                
+                self.sideMenuList = self.sideMenuList + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
+                
+                MainViewController.nameSideMenu = (newsData?.data.news[0].name)!
+                completion(true)
+            }
+            else {
+                completion(false)
+            }
+        })
     }
 
     func setNavBarAppearance(tintColor: UIColor, barColor: UIColor) {

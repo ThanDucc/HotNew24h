@@ -22,7 +22,6 @@ class ListNewsCell: UITableViewCell {
     @IBOutlet weak var indicator: UIActivityIndicatorView!
     @IBOutlet weak var indicatorFavourite: UIActivityIndicatorView!
     
-    var imgLink = ""
     var screen = ""
     var new = News(title: "", pubDate: "", link: "", description: "", imgLink: "", htmlString: "")
     
@@ -87,8 +86,14 @@ class ListNewsCell: UITableViewCell {
         if htmlString.isEmpty {
             htmlString = try! String(contentsOf: URL(string: new.link)!)
         }
+        var img: String = ""
+        if new.imgLink.contains("https") {
+            let url: URL = URL(string: new.imgLink)!
+            let data: Data = try! Data(contentsOf: url)
+            img = UIImage(data: data)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
+        }
         DispatchQueue.global().async {
-            DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: self.new.pubDate, description: self.new.description, imgLink: self.imgLink, htmlString: htmlString, link: self.new.link)
+            DatabaseManager.shared.addToFavourite(phoneNumber: phoneNumber, title: tittle, pubDate: self.new.pubDate, description: self.new.description, imgLink: img, htmlString: htmlString, link: self.new.link)
             completion(true)
         }
     }

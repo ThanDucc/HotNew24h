@@ -162,6 +162,7 @@ class TuoiTreScreen: UIViewController {
         DispatchQueue.main.async {
             self.list = list
             self.tbListTittle.reloadData()
+            self.tbListTittle.scrollToRow(at: IndexPath(item: 0, section: 0), at: .top, animated: false)
             self.indicatior.stopAnimating()
             self.indicatior.isHidden = true
             self.refreshControl.endRefreshing()
@@ -203,7 +204,6 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
                     cell.indicator.isHidden = true
                     if data != nil {
                         cell.imgNew.image = UIImage(data: data!)
-                        cell.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
                     }
                 }
             }
@@ -238,26 +238,11 @@ extension TuoiTreScreen: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let displayNewsScreen = self.storyboard?.instantiateViewController(withIdentifier: "displaySC") as! DisplayNewsScreen
         displayNewsScreen.news = list[indexPath.row]
-        
-        if !list[indexPath.row].imgLink.isEmpty {
-            DispatchQueue.global().async {
-                let url: URL = URL(string: self.list[indexPath.row].imgLink)!
-                var data: Data?
-                do {
-                    data = try Data(contentsOf: url)
-                } catch {
-                    print("Error load image")
-                }
-                DispatchQueue.main.async {
-                    if data != nil {
-                        displayNewsScreen.imgLink = UIImage(data: data!)?.jpegData(compressionQuality: 1)?.base64EncodedString() ?? ""
-                        self.navigationController?.pushViewController(displayNewsScreen, animated: false)
-                    }
-                }
-            }
-        }
+        displayNewsScreen.imgLink = list[indexPath.row].imgLink
+    
         addSeenList(news: list[indexPath.row])
         tbListTittle.deselectRow(at: indexPath, animated: false)
+        self.navigationController?.pushViewController(displayNewsScreen, animated: false)
     }
     
     func addSeenList(news: News) {
