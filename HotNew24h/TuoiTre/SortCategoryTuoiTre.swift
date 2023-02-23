@@ -13,7 +13,7 @@ protocol UpdateCategory {
 }
 class SortCategoryTuoiTre: UIViewController {
     
-    var list: [String] = []
+    var listCate: [String] = []
     var listHidden: [String] = []
     private var phoneNumber = ""
     private var language = ""
@@ -34,31 +34,18 @@ class SortCategoryTuoiTre: UIViewController {
         tbListCategory.dragDelegate = self
         tbListCategory.dropDelegate = self
         
+        tbListCategory.delegate = self
+        tbListCategory.dataSource = self
+        
         phoneNumber = Foundation.UserDefaults.standard.string(forKey: "userPhoneNumber")!
 
         self.language = Foundation.UserDefaults.standard.string(forKey: "LanguageAllApp")!
         self.lbTittle.text = "More".LocalizedString(str: language)
         self.btnDone.setTitle(self.btnDone.titleLabel?.text?.LocalizedString(str: language), for: .normal)
-        
-        getListCategory()
+
         tbListCategory.dragInteractionEnabled = true
         
         btnDone.tintAdjustmentMode = .normal
-    }
-    
-    // get list category
-    func getListCategory() {
-        DispatchQueue.global().async {
-            let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: self.phoneNumber, type: self.type)
-            DispatchQueue.main.async {
-                for i in 0..<category.count {
-                    self.list.append(category[i].name)
-                    self.listHidden.append(category[i].isHidden)
-                }
-                self.tbListCategory.delegate = self
-                self.tbListCategory.dataSource = self
-            }
-        }
     }
     
     // back to home screen and update position of categories
@@ -66,8 +53,8 @@ class SortCategoryTuoiTre: UIViewController {
         if listHidden.contains("false") {
             DispatchQueue.global().async {
                 if self.change {
-                    for i in 0..<self.list.count {
-                        DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, isHidden: self.listHidden[i], name: self.list[i], type: self.type)
+                    for i in 0..<self.listCate.count {
+                        DatabaseManager.shared.updateCategory(phoneNumber: self.phoneNumber, position: i, isHidden: self.listHidden[i], name: self.listCate[i], type: self.type)
                     }
                 }
                 DispatchQueue.main.async {
@@ -95,12 +82,12 @@ class SortCategoryTuoiTre: UIViewController {
 
 extension SortCategoryTuoiTre: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return list.count
+        return listCate.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell_1") as! ListTittleCell
-        cell.lbCategory.text = list[indexPath.row].LocalizedString(str: language)
+        cell.lbCategory.text = listCate[indexPath.row].LocalizedString(str: language)
         cell.indexOfRow = indexPath.row
         if listHidden[indexPath.row] == "false" {
             cell.btnHidden.setImage(UIImage(systemName: "pin.fill"), for: .normal)
@@ -113,9 +100,9 @@ extension SortCategoryTuoiTre: UITableViewDelegate, UITableViewDataSource {
     
     // sort and swap position
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        let item1 = list[sourceIndexPath.row]
-        list.remove(at: sourceIndexPath.row)
-        list.insert(item1, at:destinationIndexPath.row)
+        let item1 = listCate[sourceIndexPath.row]
+        listCate.remove(at: sourceIndexPath.row)
+        listCate.insert(item1, at:destinationIndexPath.row)
         
         let item2 = listHidden[sourceIndexPath.row]
         listHidden.remove(at: sourceIndexPath.row)

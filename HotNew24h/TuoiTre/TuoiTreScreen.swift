@@ -25,6 +25,8 @@ class TuoiTreScreen: UIViewController {
     var phoneNumber = ""
     
     var index: Int = 0
+    var listCate: [String] = []
+    var listHidden: [String] = []
     
     @IBOutlet weak var cvCategory: UICollectionView!
     @IBOutlet weak var tbListTittle: UITableView!
@@ -108,10 +110,14 @@ class TuoiTreScreen: UIViewController {
     func getListCategory(completion: @escaping(Bool) -> Void) {
         listTittle = []
         listURL = []
+        listCate = []
+        listHidden = []
         
         DispatchQueue.global().async {
             let category: [CategoryDatabase] = DatabaseManager.shared.getListCategory(phoneNumber: self.phoneNumber, type: self.type)
             for i in 0..<category.count {
+                self.listCate.append(category[i].name)
+                self.listHidden.append(category[i].isHidden)
                 if category[i].isHidden == "false" {
                     self.listTittle.append(category[i].name)
                     self.listURL.append(category[i].linkCategory)
@@ -324,6 +330,8 @@ extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, U
             // case click more, display sort Category screen
             let sortCateScreen = self.storyboard?.instantiateViewController(withIdentifier: "sortCate") as! SortCategoryTuoiTre
             sortCateScreen.type = type
+            sortCateScreen.listCate = self.listCate
+            sortCateScreen.listHidden = self.listHidden
             sortCateScreen.delegateSortCate = self
             sortCateScreen.nameCate = listTittle[index]
             self.navigationController?.pushViewController(sortCateScreen, animated: true)
