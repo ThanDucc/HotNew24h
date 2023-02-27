@@ -126,6 +126,84 @@
             "path": "du-lich"
           }
         ]
+      },
+      {
+        "id": 3,
+        "name": "Tien Phong",
+        "link": "https://tienphong.vn/rss/",
+        "endpoint": ".rss",
+        "category": [
+          {
+            "id": 1,
+            "name": "Home",
+            "path": "home"
+          },
+          {
+            "id": 2,
+            "name": "World",
+            "path": "the-gioi-5"
+          },
+          {
+            "id": 3,
+            "name": "Politics",
+            "path": "chinh-tri-308"
+          },
+          {
+            "id": 4,
+            "name": "Education",
+            "path": "giao-duc-71"
+          },
+          {
+            "id": 5,
+            "name": "Sports",
+            "path": "the-thao-11"
+          },
+          {
+            "id": 6,
+            "name": "Health",
+            "path": "suc-khoe-210"
+          },
+          {
+            "id": 7,
+            "name": "Science",
+            "path": "cong-nghe-45"
+          },
+          {
+            "id": 8,
+            "name": "Technology",
+            "path": "cong-nghe-khoa-hoc-46"
+          },
+          {
+            "id": 9,
+            "name": "Business",
+            "path": "kinh-te-3"
+          },
+          {
+            "id": 10,
+            "name": "Entertainment",
+            "path": "giai-tri-36"
+          },
+          {
+            "id": 11,
+            "name": "Law",
+            "path": "phap-luat-12"
+          },
+          {
+            "id": 12,
+            "name": "Tourism",
+            "path": "du-lich-220"
+          },
+          {
+            "id": 13,
+            "name": "Soldiers",
+            "path": "hanh-trang-nguoi-linh-182"
+          },
+          {
+            "id": 14,
+            "name": "Vehicle",
+            "path": "xe-113"
+          }
+        ]
       }
     ],
     "code": 200

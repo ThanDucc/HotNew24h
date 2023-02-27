@@ -25,6 +25,11 @@ class MainViewController: UIViewController {
     var sideMenuList: [String] = []
     public static var type: String = ""
     public static var nameSideMenu = "Youth"
+    public static var listNewspapers: [String] = []
+    
+    public static var indexYouthCate = 0
+    public static var indexVNExCate = 0
+    public static var indexTienPhong = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -85,20 +90,25 @@ class MainViewController: UIViewController {
     }
     
     func setUpSideMenu(completion: @escaping(Bool) -> Void) {
+        getListNewspapers(completion: { success in
+            self.sideMenuList = MainViewController.listNewspapers + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
+             
+            MainViewController.nameSideMenu = self.sideMenuList[0]
+            completion(true)
+        })
+    }
+    
+    func getListNewspapers(completion: @escaping(Bool) -> Void) {
+        MainViewController.listNewspapers = []
         let parseJson = ParseJson()
         parseJson.getData(completion: { success in
             if success {
                 let newsData = parseJson.newsData
                 for i in 0..<(newsData?.data.news.count)! {
-                    self.sideMenuList.append((newsData?.data.news[i].name)!)
+                    MainViewController.listNewspapers.append((newsData?.data.news[i].name)!)
                 }
-                
-                self.sideMenuList = self.sideMenuList + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
-                
-                MainViewController.nameSideMenu = (newsData?.data.news[0].name)!
                 completion(true)
-            }
-            else {
+            } else {
                 completion(false)
             }
         })
@@ -170,8 +180,9 @@ class MainViewController: UIViewController {
     }
     
     func changeLoginScreen() {
-        LoginScreen.indexVNExCate = 0
-        LoginScreen.indexYouthCate = 0
+        MainViewController.indexVNExCate = 0
+        MainViewController.indexYouthCate = 0
+        MainViewController.indexTienPhong = 0
         MainViewController.type = ""
         let login = self.navigationController?.storyboard?.instantiateViewController(withIdentifier: "login") as! LoginScreen
         self.navigationController?.pushViewController(login, animated: true)
@@ -189,6 +200,10 @@ extension MainViewController: MenuDelegate {
                 close(bool: false)
             case "VNExpress":
                 MainViewController.type = "VNExpress"
+                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
+                close(bool: false)
+            case "Tien Phong":
+                MainViewController.type = "Tien Phong"
                 self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
                 close(bool: false)
             case "Favourite":

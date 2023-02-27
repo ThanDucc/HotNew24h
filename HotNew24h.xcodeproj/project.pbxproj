@@ -25,7 +25,7 @@
 		182E2605296534C30016342D /* ListTitleCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 182E2603296534C30016342D /* ListTitleCell.xib */; };
 		182E2608296552F20016342D /* FavouriteScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 182E2607296552F20016342D /* FavouriteScreen.swift */; };
 		1832650A29767E2E00815E42 /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 1832650929767E2E00815E42 /* FacebookLogin */; };
-		1836BC75295DD3BE005F99EC /* ParseXML.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1836BC74295DD3BE005F99EC /* ParseXML.swift */; };
+		1836BC75295DD3BE005F99EC /* ParseXML_TuoiTre.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1836BC74295DD3BE005F99EC /* ParseXML_TuoiTre.swift */; };
 		1836BC77295DD3E6005F99EC /* News.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1836BC76295DD3E6005F99EC /* News.swift */; };
 		183D23792964357B001583E5 /* FMDB in Frameworks */ = {isa = PBXBuildFile; productRef = 183D23782964357B001583E5 /* FMDB */; };
 		183D237D29643786001583E5 /* Users.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183D237C29643786001583E5 /* Users.swift */; };
@@ -41,6 +41,7 @@
 		187D97892970164900F8DBE5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187D97882970164900F8DBE5 /* LocalizedString.swift */; };
 		187E3889295C189D0043FDC8 /* SideMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187E3888295C189D0043FDC8 /* SideMenu.swift */; };
 		187E388B295C18CA0043FDC8 /* MenuCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187E388A295C18CA0043FDC8 /* MenuCell.swift */; };
+		1881AC3E29ACACF700652051 /* ParseXML_TienPhong.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1881AC3D29ACACF700652051 /* ParseXML_TienPhong.swift */; };
 		18869EA92977A8C800A10680 /* DeleteAcc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18869EA82977A8C800A10680 /* DeleteAcc.swift */; };
 		18C1AA2A29540890001C86BC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C1AA2929540890001C86BC /* AppDelegate.swift */; };
 		18C1AA2C29540890001C86BC /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C1AA2B29540890001C86BC /* SceneDelegate.swift */; };
@@ -69,7 +70,7 @@
 		182E2600296531BE0016342D /* ListNewsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListNewsCell.swift; sourceTree = "<group>"; };
 		182E2603296534C30016342D /* ListTitleCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ListTitleCell.xib; sourceTree = "<group>"; };
 		182E2607296552F20016342D /* FavouriteScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavouriteScreen.swift; sourceTree = "<group>"; };
-		1836BC74295DD3BE005F99EC /* ParseXML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseXML.swift; sourceTree = "<group>"; };
+		1836BC74295DD3BE005F99EC /* ParseXML_TuoiTre.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseXML_TuoiTre.swift; sourceTree = "<group>"; };
 		1836BC76295DD3E6005F99EC /* News.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = News.swift; sourceTree = "<group>"; };
 		183D237C29643786001583E5 /* Users.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Users.swift; sourceTree = "<group>"; };
 		183D237E296438FE001583E5 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
@@ -84,6 +85,7 @@
 		187D97882970164900F8DBE5 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
 		187E3888295C189D0043FDC8 /* SideMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenu.swift; sourceTree = "<group>"; };
 		187E388A295C18CA0043FDC8 /* MenuCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCell.swift; sourceTree = "<group>"; };
+		1881AC3D29ACACF700652051 /* ParseXML_TienPhong.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseXML_TienPhong.swift; sourceTree = "<group>"; };
 		18869EA82977A8C800A10680 /* DeleteAcc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAcc.swift; sourceTree = "<group>"; };
 		18C1AA2629540890001C86BC /* HotNew24h.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HotNew24h.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		18C1AA2929540890001C86BC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -141,9 +143,10 @@
 		1836BC73295DD3A2005F99EC /* ParseXML */ = {
 			isa = PBXGroup;
 			children = (
-				1836BC74295DD3BE005F99EC /* ParseXML.swift */,
-				1836BC76295DD3E6005F99EC /* News.swift */,
+				1836BC74295DD3BE005F99EC /* ParseXML_TuoiTre.swift */,
 				1818C03029713F5000F32969 /* ParseXML_VNExpress.swift */,
+				1881AC3D29ACACF700652051 /* ParseXML_TienPhong.swift */,
+				1836BC76295DD3E6005F99EC /* News.swift */,
 			);
 			path = ParseXML;
 			sourceTree = "<group>";
@@ -382,13 +385,14 @@
 				183D237F296438FE001583E5 /* DatabaseManager.swift in Sources */,
 				187E3889295C189D0043FDC8 /* SideMenu.swift in Sources */,
 				183D237D29643786001583E5 /* Users.swift in Sources */,
+				1881AC3E29ACACF700652051 /* ParseXML_TienPhong.swift in Sources */,
 				18C1AA2A29540890001C86BC /* AppDelegate.swift in Sources */,
 				1852257A29652AA70014E4CF /* CategoryTuoiTreCell.swift in Sources */,
 				1818C35C296D775F0075C902 /* SeenScreen.swift in Sources */,
 				18869EA92977A8C800A10680 /* DeleteAcc.swift in Sources */,
 				18C1AA2C29540890001C86BC /* SceneDelegate.swift in Sources */,
 				187E388B295C18CA0043FDC8 /* MenuCell.swift in Sources */,
-				1836BC75295DD3BE005F99EC /* ParseXML.swift in Sources */,
+				1836BC75295DD3BE005F99EC /* ParseXML_TuoiTre.swift in Sources */,
 				184A1984295982A2006201FD /* AuthManager.swift in Sources */,
 				182E25FF296531820016342D /* ListTittleCell.swift in Sources */,
 			);

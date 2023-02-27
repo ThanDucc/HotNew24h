@@ -19,6 +19,7 @@ class TuoiTreScreen: UIViewController {
     var type: String = "Youth"
     let YOUTH = "Youth"
     let VNEXPRESS = "VNExpress"
+    let TIEN_PHONG = "Tien Phong"
     
     var list: [News] = []
     var language = ""
@@ -56,10 +57,13 @@ class TuoiTreScreen: UIViewController {
                 })
                 if self.type == self.YOUTH {
                     self.lbTittle.text = "Youth".LocalizedString(str: self.language)
-                    self.index = LoginScreen.indexYouthCate
+                    self.index = MainViewController.indexYouthCate
                 } else if self.type == self.VNEXPRESS {
                     self.lbTittle.text = "VNExpress".LocalizedString(str: self.language)
-                    self.index = LoginScreen.indexVNExCate
+                    self.index = MainViewController.indexVNExCate
+                } else {
+                    self.lbTittle.text = "Tien Phong".LocalizedString(str: self.language)
+                    self.index = MainViewController.indexTienPhong
                 }
             }
         })
@@ -146,6 +150,14 @@ class TuoiTreScreen: UIViewController {
             switch self.type {
             case "Youth":
                 let xml = ParseXML()
+                xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
+                    if success {
+                        self.update(list: xml.listNews)
+                    }
+                })
+                break
+            case "Tien Phong":
+                let xml = ParseXML_TienPhong()
                 xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
                     if success {
                         self.update(list: xml.listNews)
@@ -318,9 +330,11 @@ extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, U
         self.cvCategory.reloadData()
         
         if self.type == self.YOUTH {
-            LoginScreen.indexYouthCate = self.index
+            MainViewController.indexYouthCate = self.index
         } else if self.type == self.VNEXPRESS {
-            LoginScreen.indexVNExCate = self.index
+            MainViewController.indexVNExCate = self.index
+        } else {
+            MainViewController.indexTienPhong = self.index
         }
         
         // if category != more, display data by index

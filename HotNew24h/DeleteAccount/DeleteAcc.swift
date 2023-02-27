@@ -88,8 +88,9 @@ class DeleteAcc: UIViewController {
         Foundation.UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
         Foundation.UserDefaults.standard.removeObject(forKey: "LOG_IN")
         
-        LoginScreen.indexVNExCate = 0
-        LoginScreen.indexYouthCate = 0
+        MainViewController.indexVNExCate = 0
+        MainViewController.indexYouthCate = 0
+        MainViewController.indexTienPhong = 0
         MainViewController.type = ""
     }
     

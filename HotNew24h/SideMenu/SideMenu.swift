@@ -68,15 +68,8 @@ class SideMenu: UIViewController {
     @IBAction func btnClose(_ sender: Any) {
         if list.count == 3 {
             list = []
-            let parseJson = ParseJson()
-            parseJson.getData(completion: { success in
-                let newsData = parseJson.newsData
-                for i in 0..<(newsData?.data.news.count)! {
-                    self.list.append((newsData?.data.news[i].name)!)
-                }
-                self.list = self.list + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
-                self.tbListOption.reloadData()
-            })
+            self.list = MainViewController.listNewspapers + ["Favourite", "Seen", "Settings", "About App", "Contact us"]
+            self.tbListOption.reloadData()
         } else {
             delegateMenuItem!.close(bool: false)
         }

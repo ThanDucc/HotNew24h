@@ -31,9 +31,6 @@ class LoginScreen: UIViewController {
     var logIn = false
     let defaults = Foundation.UserDefaults.standard
     
-    public static var indexYouthCate = 0
-    public static var indexVNExCate = 0
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         

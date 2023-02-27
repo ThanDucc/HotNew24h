@@ -40,6 +40,7 @@
  */
 "Youth" = "Tuổi trẻ";
 "VNExpress" = "VNExpress";
+"Tien Phong" = "Tiền Phong";
 "Favourite" = "Yêu thích";
 "Seen" = "Đã xem";
 "Settings" = "Cài đặt";
@@ -65,6 +66,9 @@
 "Law" = "Pháp luật";
 "Tourism" = "Du lịch";
 "More" = "Xem thêm";
+"Vehicle" = "Phương tiện";
+"Soldiers" = "Người lính";
+"Politics" = "Chính trị";
 
 /*
     sort category Screen
