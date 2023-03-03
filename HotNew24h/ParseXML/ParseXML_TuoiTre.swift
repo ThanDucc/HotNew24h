@@ -10,6 +10,7 @@ import Foundation
 class ParseXML: NSObject, XMLParserDelegate {
 
     var xmlParser: XMLParser!
+    public static var shared = ParseXML()
         
     var currentParsedElement = ""
     var weAreInsideAnItem = false

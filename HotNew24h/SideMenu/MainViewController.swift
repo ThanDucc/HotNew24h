@@ -25,11 +25,9 @@ class MainViewController: UIViewController {
     var sideMenuList: [String] = []
     public static var type: String = ""
     public static var nameSideMenu = "Youth"
-    public static var listNewspapers: [String] = []
     
-    public static var indexYouthCate = 0
-    public static var indexVNExCate = 0
-    public static var indexTienPhong = 0
+    public static var listNewspapers: [String] = []
+    public static var indexCateNewspapers: [Int] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -106,6 +104,7 @@ class MainViewController: UIViewController {
                 let newsData = parseJson.newsData
                 for i in 0..<(newsData?.data.news.count)! {
                     MainViewController.listNewspapers.append((newsData?.data.news[i].name)!)
+                    MainViewController.indexCateNewspapers.append(0)
                 }
                 completion(true)
             } else {
@@ -180,9 +179,7 @@ class MainViewController: UIViewController {
     }
     
     func changeLoginScreen() {
-        MainViewController.indexVNExCate = 0
-        MainViewController.indexYouthCate = 0
-        MainViewController.indexTienPhong = 0
+        MainViewController.indexCateNewspapers = [Int](repeating: 0, count: MainViewController.listNewspapers.count)
         MainViewController.type = ""
         let login = self.navigationController?.storyboard?.instantiateViewController(withIdentifier: "login") as! LoginScreen
         self.navigationController?.pushViewController(login, animated: true)
@@ -194,18 +191,6 @@ extension MainViewController: MenuDelegate {
     func selectMenuItem(with item: String, bool: Bool) {
         if bool {
             switch item {
-            case "Youth":
-                MainViewController.type = "Youth"
-                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
-                close(bool: false)
-            case "VNExpress":
-                MainViewController.type = "VNExpress"
-                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
-                close(bool: false)
-            case "Tien Phong":
-                MainViewController.type = "Tien Phong"
-                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
-                close(bool: false)
             case "Favourite":
                 self.showViewController(viewController: UINavigationController.self, storyboardId: "favourite")
                 close(bool: false)
@@ -241,7 +226,9 @@ extension MainViewController: MenuDelegate {
                 }
                 present(viewControllerToPresent, animated: true, completion: nil)
             default:
-                break
+                MainViewController.type = item
+                self.showViewController(viewController: UINavigationController.self, storyboardId: "news_screen")
+                close(bool: false)
             }
         } else {
             close(bool: false)

@@ -17,9 +17,6 @@ class TuoiTreScreen: UIViewController {
     var listTittle:[String] = []
     var listURL:[String] = []
     var type: String = "Youth"
-    let YOUTH = "Youth"
-    let VNEXPRESS = "VNExpress"
-    let TIEN_PHONG = "Tien Phong"
     
     var list: [News] = []
     var language = ""
@@ -55,15 +52,11 @@ class TuoiTreScreen: UIViewController {
                         self.cvCategory.scrollToItem(at:IndexPath(item: self.index, section: 0), at: .centeredHorizontally, animated: false)
                     }
                 })
-                if self.type == self.YOUTH {
-                    self.lbTittle.text = "Youth".LocalizedString(str: self.language)
-                    self.index = MainViewController.indexYouthCate
-                } else if self.type == self.VNEXPRESS {
-                    self.lbTittle.text = "VNExpress".LocalizedString(str: self.language)
-                    self.index = MainViewController.indexVNExCate
-                } else {
-                    self.lbTittle.text = "Tien Phong".LocalizedString(str: self.language)
-                    self.index = MainViewController.indexTienPhong
+                for i in 0..<MainViewController.listNewspapers.count {
+                    if self.type == MainViewController.listNewspapers[i] {
+                        self.lbTittle.text = MainViewController.listNewspapers[i].LocalizedString(str: self.language)
+                        self.index = MainViewController.indexCateNewspapers[i]
+                    }
                 }
             }
         })
@@ -155,7 +148,13 @@ class TuoiTreScreen: UIViewController {
                         self.update(list: xml.listNews)
                     }
                 })
-                break
+            case "VNExpress":
+                let xml = ParseXML_VNExpress()
+                xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
+                    if success {
+                        self.update(list: xml.listNews)
+                    }
+                })
             case "Tien Phong":
                 let xml = ParseXML_TienPhong()
                 xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
@@ -163,14 +162,8 @@ class TuoiTreScreen: UIViewController {
                         self.update(list: xml.listNews)
                     }
                 })
-                break
             default:
-                let xml = ParseXML_VNExpress()
-                xml.getEpisode(urlString: self.listURL[index], completion: { [self] success in
-                    if success {
-                        self.update(list: xml.listNews)
-                    }
-                })
+                break
             }
         }
         
@@ -329,12 +322,10 @@ extension TuoiTreScreen: UICollectionViewDelegate, UICollectionViewDataSource, U
         }
         self.cvCategory.reloadData()
         
-        if self.type == self.YOUTH {
-            MainViewController.indexYouthCate = self.index
-        } else if self.type == self.VNEXPRESS {
-            MainViewController.indexVNExCate = self.index
-        } else {
-            MainViewController.indexTienPhong = self.index
+        for i in 0..<MainViewController.listNewspapers.count {
+            if self.type == MainViewController.listNewspapers[i] {
+                MainViewController.indexCateNewspapers[i] = self.index
+            }
         }
         
         // if category != more, display data by index
